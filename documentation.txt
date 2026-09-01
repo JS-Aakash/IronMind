@@ -1,0 +1,1630 @@
+1. Executive Summary
+
+Industrial organizations such as refineries, PSUs, defence-linked manufacturing units and government organizations handle large volumes of confidential knowledge work.
+
+Examples include:
+
+inspection reports
+engineering documents
+P&IDs
+SOPs and manuals
+approval notes
+financial documents
+internal correspondence
+engineering calculations
+source code
+photographs and scanned documents
+
+Cloud-based AI assistants introduce a fundamental confidentiality problem because sensitive organizational information may leave the organization's infrastructure.
+
+SovereignAI Workbench solves this by providing a fully self-hosted AI workbench capable of performing complex knowledge-work tasks entirely on local infrastructure.
+
+The system combines:
+
+Local LLMs + multimodal AI + model routing + agentic orchestration + local RAG + sandboxed tools + artifact generation + sovereignty monitoring
+
+The platform is model-agnostic, allowing multiple open-weight models to coexist and enabling the system to select the appropriate model according to the task.
+
+2. Core Problem
+
+Current AI assistants typically follow:
+
+User
+ ↓
+Cloud AI
+ ↓
+Response
+
+For confidential industrial organizations:
+
+Confidential Data
+      ↓
+    Cloud
+      ↓
+Security / Compliance Risk
+
+Organizations therefore face a tradeoff:
+
+                    ┌───────────────┐
+                    │ Confidential │
+                    │    Work      │
+                    └───────┬───────┘
+                            │
+             ┌──────────────┴──────────────┐
+             ▼                             ▼
+       Manual Processing             Cloud AI
+             │                             │
+      Low productivity              Confidentiality
+                                     concerns
+
+SovereignAI Workbench provides a third option:
+
+              Confidential Work
+                     │
+                     ▼
+          ┌─────────────────────┐
+          │ SovereignAI         │
+          │ Workbench            │
+          └──────────┬──────────┘
+                     │
+             Everything Local
+                     │
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+    Models          Tools         Data
+     LOCAL          LOCAL         LOCAL
+3. Vision
+
+The long-term vision is:
+
+A local AI operating environment for organizations where employees can delegate confidential knowledge-work tasks to AI without sending organizational data outside the premises.
+
+The system should feel similar to modern AI assistants from the user's perspective, while being fundamentally different underneath.
+
+Instead of:
+
+"Chat with an LLM"
+
+the system becomes:
+
+"Delegate a task to a local AI worker."
+
+4. Objectives
+
+The project has eight primary objectives.
+
+O1 — Local AI inference
+
+Run open-weight models entirely on organizational hardware.
+
+O2 — Intelligent model selection
+
+Automatically select an appropriate model based on task requirements.
+
+O3 — Agentic execution
+
+Allow the AI to plan, execute tools, observe results and iterate.
+
+O4 — Multimodal understanding
+
+Process:
+
+text
+PDFs
+scanned PDFs
+images
+handwritten notes
+tables
+engineering diagrams
+O5 — Organizational knowledge grounding
+
+Use local SOPs, manuals and previous documents through RAG.
+
+O6 — Tool execution
+
+Provide local tools such as:
+
+file operations
+code execution
+calculations
+document generation
+spreadsheet operations
+O7 — Real deliverables
+
+Generate actual:
+
+DOCX
+PPTX
+XLSX
+PDF
+source code
+
+rather than only chat responses.
+
+O8 — Provable sovereignty
+
+Demonstrate that:
+
+External API calls = 0
+Cloud LLM calls = 0
+Internet access = blocked
+Data egress = 0
+5. Key Design Principles
+
+These principles should guide every implementation decision.
+
+5.1 Local-first
+
+Every component should operate locally whenever possible.
+
+5.2 Model agnostic
+
+The application should not depend on one specific LLM.
+
+Application
+     ↓
+Model Interface
+     ↓
+┌────────┬────────┬────────┐
+│ Qwen   │ QwenVL │ Coder  │
+└────────┴────────┴────────┘
+
+A future model should be installable without redesigning the application.
+
+5.3 Capability-based routing
+
+Models aren't selected merely because they are "better."
+
+They are selected according to capabilities.
+
+Example:
+
+Task
+ ↓
+Capabilities required
+ ↓
+Model selection
+5.4 Controlled autonomy
+
+The agent should not have unrestricted access to the machine.
+
+Every action should go through an explicit tool interface.
+
+Agent
+ ↓
+Tool Permission
+ ↓
+Tool
+ ↓
+Result
+ ↓
+Agent
+5.5 Auditability
+
+Every important operation should be recorded.
+
+Task
+Model
+Tool
+Input
+Output
+Duration
+Status
+5.6 Sovereignty by architecture, not by promise
+
+We should not merely display:
+
+"Your data is safe."
+
+The architecture should make external communication impossible.
+
+6. High-Level Architecture
+                         USER
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │   WEB WORKBENCH  │
+                  │    Next.js UI    │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                  ┌──────────────────┐
+                  │   API GATEWAY    │
+                  │     FastAPI      │
+                  └────────┬─────────┘
+                           │
+                           ▼
+                 ┌────────────────────┐
+                 │ TASK UNDERSTANDING │
+                 └─────────┬──────────┘
+                           │
+                           ▼
+                 ┌────────────────────┐
+                 │    MODEL ROUTER    │
+                 └─────────┬──────────┘
+                           │
+           ┌───────────────┼────────────────┐
+           ▼               ▼                ▼
+      Reasoning         Vision            Coding
+       Model             Model             Model
+           │               │                │
+           └───────────────┼────────────────┘
+                           ▼
+                  ┌─────────────────┐
+                  │ AGENT ENGINE    │
+                  │ Plan → Execute  │
+                  │ → Observe →     │
+                  │ Verify → Finish │
+                  └────────┬────────┘
+                           │
+          ┌────────────────┼──────────────────┐
+          ▼                ▼                  ▼
+       Local RAG        Local Tools        Sandbox
+          │                │                  │
+          ▼                ▼                  ▼
+       SOPs          File / Docs /       Code execution
+       Manuals       Excel / PPT
+       Reports       Calculations
+          │                │
+          └────────────────┼──────────────────┘
+                           ▼
+                  ┌─────────────────┐
+                  │ ARTIFACT ENGINE │
+                  └────────┬────────┘
+                           │
+                           ▼
+              DOCX / PPTX / XLSX / PDF
+                           │
+                           ▼
+                  ┌─────────────────┐
+                  │ AUDIT + SECURITY│
+                  │ MONITOR         │
+                  └─────────────────┘
+7. Major System Components
+
+The system consists of 10 major modules.
+
+Module	Responsibility
+Web Workbench	User interaction
+API Backend	Application APIs
+Task Classifier	Understand task
+Model Router	Select model
+Model Manager	Load/unload models
+Agent Engine	Multi-step execution
+Knowledge Engine	Local RAG
+Tool System	Local capabilities
+Artifact Engine	Generate files
+Sovereignty Monitor	Security + audit
+8. Module 1 — Web Workbench
+
+The frontend should provide an AI workspace rather than just a chat window.
+
+Main screens
+Dashboard
+SovereignAI
+
+System Status
+────────────────────
+Models       3
+Knowledge    2,481 chunks
+Active Jobs  1
+
+Sovereignty
+────────────────────
+Internet        BLOCKED
+External Calls  0
+Data Egress     0 B
+Workbench
+
+Main interface:
+
+┌──────────────────────────────────────────────┐
+│ SovereignAI                                  │
+├──────────────────────────────────────────────┤
+│                                              │
+│ Task                                          │
+│                                              │
+│ [Upload documents]                            │
+│                                              │
+│ "Analyze this inspection report..."           │
+│                                              │
+│                [Execute Task]                 │
+│                                              │
+├──────────────────────────────────────────────┤
+│ Agent Execution                               │
+│                                              │
+│ ✓ Task classified                             │
+│ ✓ Model selected                              │
+│ ✓ Document processed                          │
+│ ⟳ Searching knowledge base                    │
+│                                              │
+└──────────────────────────────────────────────┘
+9. Module 2 — Task Understanding
+
+Before execution, the system determines what the user is asking.
+
+Example:
+
+Analyze this inspection report and create an approval note.
+
+The classifier produces:
+
+{
+  "task_type": "document_analysis",
+  "requires_vision": true,
+  "requires_rag": true,
+  "requires_reasoning": true,
+  "required_output": "docx"
+}
+
+Another request:
+
+Write Python code to calculate pump efficiency and test it.
+
+Produces:
+
+{
+  "task_type": "coding",
+  "requires_code_execution": true,
+  "requires_reasoning": true,
+  "required_output": "python"
+}
+10. Module 3 — Model Router
+
+This is one of the core innovations.
+
+The router converts:
+
+Task
+ ↓
+Capability Requirements
+ ↓
+Available Models
+ ↓
+Best Model
+Model registry
+
+Example:
+
+{
+  "name": "qwen3",
+  "version": "8b",
+  "capabilities": [
+    "reasoning",
+    "planning",
+    "text"
+  ],
+  "context_length": "...",
+  "status": "available"
+}
+
+Vision:
+
+{
+  "name": "qwen2.5-vl",
+  "capabilities": [
+    "vision",
+    "document_understanding",
+    "ocr_assistance"
+  ]
+}
+
+Coding:
+
+{
+  "name": "qwen2.5-coder",
+  "capabilities": [
+    "coding",
+    "debugging",
+    "code_reasoning"
+  ]
+}
+11. Model Selection Logic
+
+We can initially implement a capability scoring system.
+
+For every model:
+
+Score =
+Capability Match
++ Task Match
++ Context Compatibility
++ Hardware Availability
++ Performance
+
+Example:
+
+User Task:
+"Debug this Python program"
+
+Candidates:
+
+Qwen3
+  Coding: 0.75
+  Reasoning: 0.90
+
+Qwen-Coder
+  Coding: 0.98
+  Reasoning: 0.85
+
+Winner:
+Qwen-Coder
+
+Later we can make the router itself ML-based.
+
+But for the hackathon, deterministic routing is safer and more explainable.
+
+12. Module 4 — Model Manager
+
+The model manager controls local models.
+
+Responsibilities:
+
+model registration
+model availability
+model loading
+model unloading
+hardware monitoring
+model switching
+inference API
+
+Because the laptop has limited VRAM, we should support:
+
+Model A
+ ↓
+Unload
+ ↓
+Model B
+ ↓
+Unload
+ ↓
+Model C
+
+rather than loading everything simultaneously.
+
+13. Current Model
+
+Our first working model is:
+
+Qwen3:8B
+
+running locally through Ollama.
+
+Architecture:
+
+FastAPI
+   │
+   ▼
+Model Manager
+   │
+   ▼
+Ollama API
+   │
+   ▼
+Qwen3:8B
+
+The rest of the application should never directly depend on Ollama.
+
+Instead:
+
+Agent
+ ↓
+ModelService
+ ↓
+InferenceBackend
+ ↓
+Ollama
+
+This lets us replace Ollama with another inference engine later.
+
+14. Module 5 — Agent Engine
+
+The agent is responsible for turning a user goal into a sequence of actions.
+
+We use:
+
+Plan → Execute → Observe → Verify → Iterate
+
+Example:
+
+Goal
+ ↓
+Plan
+ ↓
+Read report
+ ↓
+Extract findings
+ ↓
+Search SOP
+ ↓
+Analyze
+ ↓
+Draft note
+ ↓
+Validate
+ ↓
+Generate DOCX
+ ↓
+Finish
+15. Agent State
+
+Each task should maintain a state object.
+
+Example:
+
+{
+  "task_id": "TASK-001",
+  "goal": "...",
+  "plan": [],
+  "current_step": 2,
+  "documents": [],
+  "retrieved_context": [],
+  "tool_results": [],
+  "artifacts": [],
+  "errors": [],
+  "status": "running"
+}
+
+This makes the agent:
+
+resumable
+debuggable
+auditable
+16. Agent Tools
+
+The agent should have controlled access to tools.
+
+Tool registry
+Tools
+├── file.read
+├── file.write
+├── document.parse
+├── knowledge.search
+├── python.execute
+├── spreadsheet.create
+├── word.create
+├── ppt.create
+├── pdf.create
+└── calculator
+
+The LLM does not directly access the operating system.
+
+It requests:
+
+{
+  "tool": "file.read",
+  "arguments": {
+    "path": "inspection_report.pdf"
+  }
+}
+
+The backend validates it and executes the tool.
+
+17. Code Sandbox
+
+This is mandatory for the coding demo.
+
+Architecture:
+
+Agent
+ │
+ ▼
+Generated Code
+ │
+ ▼
+Sandbox Manager
+ │
+ ▼
+Docker Container
+ │
+ ├── Network: NONE
+ ├── Limited CPU
+ ├── Limited memory
+ ├── Temporary filesystem
+ └── Timeout
+ │
+ ▼
+Execution Result
+ │
+ ▼
+Agent
+
+This prevents generated code from having unrestricted access to the host.
+
+18. Local Knowledge Base
+
+The organization can upload:
+
+SOPs
+Manuals
+Inspection Procedures
+Safety Documents
+Equipment Manuals
+Previous Reports
+Internal Policies
+
+Pipeline:
+
+Document
+ ↓
+Parser
+ ↓
+OCR if required
+ ↓
+Text + Layout
+ ↓
+Chunking
+ ↓
+Embedding
+ ↓
+Vector Database
+19. RAG Architecture
+                 USER TASK
+                     │
+                     ▼
+                 Query
+                     │
+                     ▼
+              Embedding Model
+                     │
+                     ▼
+               Vector Search
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+        SOP        Manual     Report
+          │          │          │
+          └──────────┼──────────┘
+                     ▼
+                Context
+                     │
+                     ▼
+                  LLM
+                     │
+                     ▼
+                Grounded Answer
+20. Multimodal Pipeline
+
+For scanned PDFs:
+
+PDF
+ ↓
+PDF page extraction
+ ↓
+OCR
+ ↓
+Layout analysis
+ ↓
+Images
+ ↓
+Vision model
+ ↓
+Structured information
+
+For an engineering drawing:
+
+P&ID Image
+ ↓
+Vision Model
+ ↓
+Objects / labels / relationships
+ ↓
+Structured representation
+ ↓
+Reasoning Model
+21. Why OCR + Vision?
+
+We should not ask the vision LLM to perform everything.
+
+Instead:
+
+OCR
+ ↓
+Text extraction
+
+Vision
+ ↓
+Visual understanding
+
+LLM
+ ↓
+Reasoning
+
+This gives us better control.
+
+22. Artifact Generation
+
+The system's final output should often be a file.
+
+Example:
+
+Agent
+ ↓
+Structured result
+ ↓
+Artifact generator
+ ↓
+DOCX
+
+Supported artifact types:
+
+Word
+python-docx
+Excel
+openpyxl
+PowerPoint
+python-pptx
+PDF
+ReportLab
+23. Example Approval Note
+
+The generated document could contain:
+
+APPROVAL NOTE
+
+Subject:
+Inspection Review – Pump P-101
+
+1. Equipment Details
+
+2. Inspection Summary
+
+3. Key Findings
+
+4. Observed Abnormalities
+
+5. Risk Assessment
+
+6. Applicable SOP Requirements
+
+7. Recommended Action
+
+8. Justification
+
+9. References
+
+10. Approval
+
+The system should retain the evidence used to produce the recommendation.
+
+24. Artifact Provenance
+
+Every generated artifact should have metadata:
+
+{
+  "artifact": "approval_note.docx",
+  "task_id": "TASK-001",
+  "models_used": [
+    "qwen2.5-vl",
+    "qwen3"
+  ],
+  "documents_used": [
+    "inspection_report.pdf",
+    "maintenance_sop.pdf"
+  ],
+  "generated_at": "...",
+  "verified": true
+}
+
+This is extremely useful for enterprise trust.
+
+25. Sovereignty Monitor
+
+This should be a first-class system component.
+
+Monitor:
+
+External HTTP connections
+DNS queries
+Cloud API calls
+Data transmission
+Model calls
+Tool execution
+
+Dashboard:
+
+╔══════════════════════════════════╗
+║       SOVEREIGNTY STATUS         ║
+╠══════════════════════════════════╣
+║ Internet          BLOCKED        ║
+║ External APIs     0              ║
+║ Cloud LLM Calls   0              ║
+║ DNS Requests      0              ║
+║ Data Egress       0 bytes        ║
+║                                  ║
+║ Local Model Calls 24             ║
+║ Local Tool Calls  11             ║
+║ Sandbox Runs       3             ║
+║                                  ║
+║        🟢 SOVEREIGN MODE        ║
+╚══════════════════════════════════╝
+26. Network Isolation
+
+Eventually the entire deployment should be capable of running with:
+
+Internet
+    X
+    │
+┌───┴───────────────┐
+│ SovereignAI       │
+│                   │
+│ Models            │
+│ RAG               │
+│ Agent             │
+│ Tools             │
+│ Database          │
+└───────────────────┘
+
+For Docker containers:
+
+network_mode: none
+
+where appropriate.
+
+The important thing is that the application's functionality does not depend on internet connectivity.
+
+27. Audit System
+
+Every task produces an execution trace.
+
+Example:
+
+TASK-001
+
+09:32:01 Task received
+09:32:02 Classified → Document Analysis
+09:32:02 Selected → Qwen2.5-VL
+09:32:08 OCR completed
+09:32:14 Vision analysis completed
+09:32:15 RAG search → 4 documents
+09:32:20 Selected → Qwen3
+09:32:27 Draft generated
+09:32:29 Validation passed
+09:32:30 DOCX generated
+09:32:30 Task completed
+
+This is both useful for debugging and powerful for the demo.
+
+28. Security Model
+
+We should implement several security layers.
+
+Layer 1 — Authentication
+
+Users authenticate locally.
+
+Layer 2 — Authorization
+
+Roles:
+
+Admin
+Engineer
+Reviewer
+Operator
+Layer 3 — Tool permissions
+
+For example:
+
+Engineer
+ ✓ read documents
+ ✓ RAG
+ ✓ code sandbox
+
+Admin
+ ✓ model management
+ ✓ knowledge management
+Layer 4 — Sandbox isolation
+
+Code execution cannot access the host.
+
+Layer 5 — Network isolation
+
+No external communication.
+
+Layer 6 — Audit
+
+All sensitive operations logged.
+
+29. Data Storage
+
+A simple initial architecture:
+
+SQLite
+   │
+   ├── users
+   ├── tasks
+   ├── agent_steps
+   ├── model_registry
+   ├── tool_calls
+   ├── artifacts
+   └── audit_logs
+
+Documents:
+
+/storage
+   ├── uploads
+   ├── knowledge
+   ├── artifacts
+   └── temporary
+
+Vector database:
+
+ChromaDB
+
+Later:
+
+PostgreSQL
++
+pgvector
+
+for enterprise deployments.
+
+30. Suggested Backend Structure
+
+I'd structure the backend approximately like this:
+
+backend/
+│
+├── app/
+│   ├── main.py
+│   │
+│   ├── api/
+│   │   ├── tasks.py
+│   │   ├── models.py
+│   │   ├── knowledge.py
+│   │   ├── artifacts.py
+│   │   └── system.py
+│   │
+│   ├── agent/
+│   │   ├── orchestrator.py
+│   │   ├── planner.py
+│   │   ├── executor.py
+│   │   ├── verifier.py
+│   │   └── state.py
+│   │
+│   ├── models/
+│   │   ├── manager.py
+│   │   ├── router.py
+│   │   ├── registry.py
+│   │   └── providers/
+│   │       ├── ollama.py
+│   │       └── ...
+│   │
+│   ├── tools/
+│   │   ├── registry.py
+│   │   ├── file_tools.py
+│   │   ├── code_tools.py
+│   │   ├── document_tools.py
+│   │   └── spreadsheet_tools.py
+│   │
+│   ├── rag/
+│   │   ├── ingestion.py
+│   │   ├── embeddings.py
+│   │   ├── retriever.py
+│   │   └── vector_store.py
+│   │
+│   ├── multimodal/
+│   │   ├── ocr.py
+│   │   ├── pdf.py
+│   │   └── vision.py
+│   │
+│   ├── artifacts/
+│   │   ├── docx.py
+│   │   ├── pptx.py
+│   │   ├── xlsx.py
+│   │   └── pdf.py
+│   │
+│   ├── security/
+│   │   ├── auth.py
+│   │   ├── permissions.py
+│   │   └── network.py
+│   │
+│   └── audit/
+│       └── logger.py
+│
+└── requirements.txt
+31. Frontend Structure
+frontend/
+│
+├── app/
+│   ├── dashboard/
+│   ├── workbench/
+│   ├── knowledge/
+│   ├── models/
+│   ├── artifacts/
+│   ├── runs/
+│   ├── audit/
+│   └── sovereignty/
+│
+├── components/
+│   ├── chat/
+│   ├── agent/
+│   ├── models/
+│   ├── artifacts/
+│   ├── knowledge/
+│   └── security/
+│
+└── lib/
+    └── api.ts
+32. API Architecture
+
+Example APIs:
+
+POST   /api/tasks
+GET    /api/tasks/{id}
+
+POST   /api/tasks/{id}/execute
+GET    /api/tasks/{id}/events
+
+GET    /api/models
+POST   /api/models
+POST   /api/models/{id}/load
+POST   /api/models/{id}/unload
+
+POST   /api/knowledge/upload
+POST   /api/knowledge/index
+GET    /api/knowledge/search
+
+GET    /api/artifacts
+GET    /api/artifacts/{id}
+
+GET    /api/audit
+GET    /api/sovereignty/status
+33. Event Streaming
+
+The UI should show agent execution live.
+
+Instead of waiting:
+
+Request
+       ↓
+...... 30 seconds ......
+       ↓
+Answer
+
+we stream:
+
+Task received
+       ↓
+Planning
+       ↓
+Model selected
+       ↓
+Tool execution
+       ↓
+RAG retrieval
+       ↓
+Reasoning
+       ↓
+Verification
+       ↓
+Artifact generation
+
+We can use:
+
+WebSockets or Server-Sent Events (SSE).
+
+For the prototype, SSE is simpler.
+
+34. Primary Demo Workflow
+
+This becomes our flagship scenario.
+
+Input
+
+Scanned inspection report.
+
+User instruction
+Analyze this inspection report.
+Identify important findings.
+Refer to the maintenance SOP.
+Prepare an approval note.
+Execution
+USER
+ ↓
+TASK CLASSIFIER
+ ↓
+DOCUMENT + VISION + RAG + DOCX
+ ↓
+MODEL ROUTER
+ ↓
+Qwen2.5-VL
+ ↓
+OCR + Vision
+ ↓
+LOCAL KNOWLEDGE SEARCH
+ ↓
+Qwen3
+ ↓
+REASONING
+ ↓
+VALIDATION
+ ↓
+DOCX GENERATOR
+ ↓
+Approval_Note.docx
+35. Coding Demo
+
+User:
+
+Create a Python program to calculate pump efficiency.
+Run tests and verify the result.
+
+Execution:
+
+Task Classification
+       ↓
+Coding
+       ↓
+Qwen2.5-Coder
+       ↓
+Generate code
+       ↓
+Docker Sandbox
+       ↓
+Run tests
+       ↓
+Failure?
+  ┌────┴────┐
+ YES        NO
+  │          │
+Fix          │
+  │          │
+  └────┬─────┘
+       ▼
+Verified Code
+36. Multimodal Demo
+
+Input:
+
+P&ID image
+
+System:
+
+Image
+ ↓
+Vision Model
+ ↓
+Equipment identification
+ ↓
+Instrument identification
+ ↓
+Relationship extraction
+ ↓
+Structured result
+
+Example:
+
+P-101 → Pump
+T-101 → Tank
+PT-101 → Pressure Transmitter
+FT-101 → Flow Transmitter
+37. Model Lineup
+
+Our intended production architecture:
+
+Model	Role
+Qwen3	Reasoning + planning
+Qwen2.5-VL	Vision + multimodal
+Qwen2.5-Coder	Programming
+BGE-M3	Embeddings
+PaddleOCR	OCR
+Current development
+
+Only:
+
+Qwen3:8B
+
+is installed.
+
+We'll add the others incrementally and benchmark them on the actual machine.
+
+38. Hardware Adaptability
+
+The system should detect available hardware.
+
+GPU Memory
+     ↓
+Model Manager
+     ↓
+Available Models
+
+Example:
+
+6 GB GPU
+ ↓
+Small quantized models
+
+16 GB GPU
+ ↓
+7B–14B quantized
+
+24 GB+
+ ↓
+larger models
+
+Enterprise GPU Server
+ ↓
+70B / 120B+
+
+The application remains unchanged.
+
+This is important because the PS explicitly allows smaller models when 120B-class hardware isn't available.
+
+39. Model Abstraction
+
+Never write:
+
+ollama.chat(...)
+
+throughout the application.
+
+Instead:
+
+model_service.generate(...)
+
+Then:
+
+ModelService
+     │
+     ├── OllamaProvider
+     ├── VLLMProvider
+     ├── TransformersProvider
+     └── FutureProvider
+
+This makes the architecture genuinely model-agnostic.
+
+40. Failure Handling
+
+Agentic systems need strong failure handling.
+
+Example:
+
+Tool fails
+ ↓
+Capture error
+ ↓
+Agent analyzes
+ ↓
+Retry / alternative tool
+ ↓
+If still failing
+ ↓
+Ask human
+
+Never silently fabricate success.
+
+For example:
+
+❌ "Document successfully generated"
+
+when DOCX generation failed.
+
+Instead:
+
+⚠ Artifact generation failed
+
+Reason:
+Missing required field: equipment_id
+
+Action required:
+Please provide equipment ID.
+41. Human-in-the-Loop
+
+For high-risk operations, we should support approval.
+
+Example:
+
+AI recommendation
+       ↓
+Human review
+       ↓
+Approve / Reject
+
+Particularly for:
+
+engineering recommendations
+approval notes
+safety decisions
+destructive file operations
+
+The AI should assist, not autonomously make safety-critical decisions.
+
+42. Trust and Explainability
+
+Every significant answer should be traceable.
+
+For example:
+
+Recommendation:
+Schedule maintenance for P-101
+
+Evidence:
+├── Inspection Report, Page 3
+├── Maintenance SOP, Section 4.2
+└── Equipment Manual, Page 18
+
+Model:
+Qwen3:8B
+
+Confidence:
+0.87
+
+The "confidence" should only be shown if we have a defensible method for calculating it; otherwise use a qualitative evidence indicator rather than inventing a numerical probability.
+
+43. Security Threats
+
+We should explicitly consider:
+
+Prompt injection
+
+A malicious document may contain:
+
+"Ignore previous instructions..."
+
+The agent should treat retrieved documents as data, not instructions.
+
+Malicious code
+
+Generated code runs inside Docker.
+
+Path traversal
+
+Tool APIs must prevent:
+
+../../secret.txt
+Network exfiltration
+
+Sandbox:
+
+network = none
+Unauthorized tools
+
+RBAC + tool permissions.
+
+Model hallucination
+
+RAG + evidence + verification + human review.
+
+44. MVP Definition
+
+For the hackathon, our MVP is NOT the entire enterprise platform.
+
+We need these to work extremely well:
+
+Core
+Local Qwen3
+Model router
+Agent
+Local RAG
+OCR
+Vision model
+Coding model
+Docker sandbox
+DOCX generation
+Sovereignty monitor
+Audit trail
+Demo workflows
+
+Workflow 1
+
+Scanned Inspection Report
+        ↓
+AI Analysis
+        ↓
+SOP Retrieval
+        ↓
+Approval Note DOCX
+
+Workflow 2
+
+Coding Request
+        ↓
+Code Generation
+        ↓
+Sandbox
+        ↓
+Testing
+        ↓
+Verified Code
+
+Workflow 3
+
+P&ID
+ ↓
+Vision
+ ↓
+Equipment Identification
+45. Development Phases
+
+I recommend this exact implementation order.
+
+Phase 1 — Local LLM
+
+Goal: Get Qwen3 working through our backend.
+
+FastAPI
+ ↓
+ModelService
+ ↓
+Ollama
+ ↓
+Qwen3
+Phase 2 — Basic Workbench
+
+Build:
+
+Next.js
+ ↓
+Chat
+ ↓
+FastAPI
+ ↓
+Qwen3
+
+At this point we have our first working local AI assistant.
+
+Phase 3 — Model abstraction + router
+
+Add:
+
+Model Registry
+Model Manager
+Task Classifier
+Router
+Phase 4 — Agent
+
+Implement:
+
+Plan
+ ↓
+Tool
+ ↓
+Observe
+ ↓
+Verify
+Phase 5 — Tools
+
+Add:
+
+File
+Calculator
+Python
+DOCX
+Phase 6 — Sandbox
+
+Docker-based execution.
+
+Phase 7 — RAG
+
+Add:
+
+PDF
+ ↓
+Parsing
+ ↓
+Chunking
+ ↓
+Embedding
+ ↓
+Vector DB
+ ↓
+Retrieval
+Phase 8 — Multimodal
+
+Add:
+
+OCR
++
+Vision Model
+Phase 9 — Artifact system
+
+DOCX → XLSX → PPTX → PDF.
+
+Phase 10 — Sovereignty
+
+Add:
+
+Network isolation
+Audit
+Network monitor
+Data-flow visualization
+Phase 11 — Polish
+
+Finally:
+
+UI
+animations
+execution timeline
+model cards
+artifact preview
+logs
+demo data
+error handling
+46. What We Should NOT Build
+
+This is equally important.
+
+We should not waste hackathon time on:
+
+❌ Training our own LLM
+❌ Fine-tuning a huge model
+❌ Building a custom vector database
+❌ Building our own OCR engine
+❌ Building a custom inference engine
+❌ 10 different agents
+❌ Kubernetes
+❌ Microservices everywhere
+❌ Blockchain
+❌ Facial recognition
+❌ Complex distributed systems
+
+Our innovation is orchestration + sovereignty + usability, not reinventing foundational AI infrastructure.
+
+47. Final Product Architecture
+
+Ultimately:
+
+                 ┌────────────────────────────┐
+                 │       SOVEREIGNAI          │
+                 │         WORKBENCH          │
+                 └─────────────┬──────────────┘
+                               │
+                         USER REQUEST
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ TASK UNDERSTANDING  │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    MODEL ROUTER     │
+                    └──────────┬──────────┘
+                               │
+          ┌────────────────────┼───────────────────┐
+          ▼                    ▼                   ▼
+       REASONING             VISION              CODE
+        Qwen3              Qwen-VL             Coder
+          │                    │                   │
+          └────────────────────┼───────────────────┘
+                               ▼
+                       AGENT ORCHESTRATOR
+                               │
+             ┌─────────────────┼──────────────────┐
+             ▼                 ▼                  ▼
+            RAG              TOOLS             SANDBOX
+             │                 │                  │
+             ▼                 ▼                  ▼
+          SOPs             Files/Docs          Python
+          Manuals          Excel/PPT          Tests
+          Reports          Calculations
+             │                 │                  │
+             └─────────────────┼──────────────────┘
+                               ▼
+                      ARTIFACT GENERATOR
+                               │
+               ┌───────────────┼───────────────┐
+               ▼               ▼               ▼
+             DOCX            XLSX            PPTX
+                               │
+                               ▼
+                      AUDIT + PROVENANCE
+                               │
+                               ▼
+                     SOVEREIGNTY MONITOR
+                               │
+                    ┌──────────┴──────────┐
+                    │                     │
+               LOCAL ONLY             0 EGRESS
+48. The One-Sentence Product Definition
+
+If a judge asks:
+
+"What exactly did you build?"
+
+Our answer should be:
+
+"SovereignAI is a self-hosted agentic AI workbench that automatically routes confidential tasks to specialized open-weight models, executes multi-step workflows using local tools and organizational knowledge, generates verified business artifacts, and provides auditable proof that no data leaves the organization's infrastructure."
+
+That's the product.

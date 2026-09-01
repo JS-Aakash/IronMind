@@ -1,0 +1,197 @@
+{
+  "task_id": "TASK_INSPECT_001",
+  "user": "aakash_engineer",
+  "task_goal": "Analyze scanned inspection report for pump P-101 and generate formal approval note.",
+  "task_classification": "document_analysis_and_reasoning",
+  "models_selected": [
+    "qwen2.5vl:7b",
+    "qwen3:8b"
+  ],
+  "model_calls_count": 2,
+  "total_tokens": 1978,
+  "tool_calls_count": 2,
+  "retrieved_documents": [
+    "MRPL_SOP_P101_Pump_Maintenance.pdf"
+  ],
+  "source_citations": [
+    {
+      "document": "MRPL_SOP_P101_Pump_Maintenance.pdf",
+      "page": 2,
+      "section": "Section 4.2"
+    }
+  ],
+  "sandbox_executions_count": 0,
+  "generated_artifacts": [
+    {
+      "artifact_id": "ART_097ea637",
+      "filename": "MRPL_Approval_Note_P_101.docx",
+      "type": "docx"
+    }
+  ],
+  "errors": [],
+  "completion_status": "completed",
+  "created_at": "2026-09-01T06:00:00.000000",
+  "completed_at": "2026-09-01T06:00:12.450000",
+  "duration_ms": 12450.0,
+  "events": [
+    {
+      "event_id": "EVT_996db982",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "TASK_CREATED",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Core Gateway",
+      "actor": "local_operator",
+      "duration_ms": 0.0,
+      "details": {
+        "goal": "Analyze scanned inspection report for pump P-101 and generate formal approval note."
+      }
+    },
+    {
+      "event_id": "EVT_593c3fc4",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "TASK_CLASSIFIED",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Model Router",
+      "actor": "qwen3:0.6b",
+      "duration_ms": 45.2,
+      "details": {
+        "task_type": "document_analysis_and_reasoning",
+        "required_capabilities": [
+          "vision",
+          "reasoning",
+          "rag",
+          "artifact_generation"
+        ]
+      }
+    },
+    {
+      "event_id": "EVT_517be34f",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "MODEL_SELECTED",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Model Router",
+      "actor": "router_engine",
+      "duration_ms": 12.0,
+      "details": {
+        "stages": {
+          "vision": "qwen2.5vl:7b",
+          "reasoning": "qwen3:8b"
+        },
+        "reason": "Dual-stage pipeline routed vision to Qwen2.5-VL and SOP reasoning to Qwen3."
+      }
+    },
+    {
+      "event_id": "EVT_3702ce32",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "TOOL_CALLED",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Tool System",
+      "actor": "agent_orchestrator",
+      "duration_ms": 150.0,
+      "details": {
+        "tool_name": "document.ocr_parse",
+        "arguments_digest": "sha256_e819b4... (scanned_p101_report.png)",
+        "status": "success"
+      }
+    },
+    {
+      "event_id": "EVT_689b7f1f",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Model Gateway",
+      "actor": "qwen2.5vl:7b",
+      "duration_ms": 2100.5,
+      "details": {
+        "model": "qwen2.5vl:7b",
+        "prompt_tokens": 580,
+        "completion_tokens": 128,
+        "extracted_tags": [
+          "P-101",
+          "ISO-10816"
+        ],
+        "measured_vibration": 4.8
+      }
+    },
+    {
+      "event_id": "EVT_0e974f9a",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "RAG_RETRIEVAL",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "RAG Engine",
+      "actor": "agent_orchestrator",
+      "duration_ms": 32.8,
+      "details": {
+        "query": "P-101 vibration threshold ISO 10816",
+        "top_k": 2,
+        "matched_docs": [
+          "MRPL_SOP_P101_Pump_Maintenance.pdf (Page 2)"
+        ],
+        "citation_count": 2
+      }
+    },
+    {
+      "event_id": "EVT_b0568314",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Model Gateway",
+      "actor": "qwen3:8b",
+      "duration_ms": 4800.0,
+      "details": {
+        "model": "qwen3:8b",
+        "prompt_tokens": 850,
+        "completion_tokens": 420,
+        "action": "synthesize_approval_note",
+        "reasoning_steps": 4
+      }
+    },
+    {
+      "event_id": "EVT_69255f51",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "ARTIFACT_CREATED",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Artifact Engine",
+      "actor": "docx_generator",
+      "duration_ms": 340.2,
+      "details": {
+        "artifact_id": "ART_097ea637",
+        "filename": "MRPL_Approval_Note_P_101.docx",
+        "format": "docx",
+        "sha256": "8e28c4ab69992fa150c1134bc4d7e3422d3d44635bccc9f782fc2f47cd9be0ae",
+        "size_bytes": 38227
+      }
+    },
+    {
+      "event_id": "EVT_16630b2b",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "VERIFICATION",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Agent Verifier",
+      "actor": "agent_verifier",
+      "duration_ms": 85.0,
+      "details": {
+        "verification_passed": true,
+        "checks": [
+          "artifact_non_empty",
+          "sop_citations_present",
+          "signature_blocks_verified"
+        ]
+      }
+    },
+    {
+      "event_id": "EVT_d4ce7030",
+      "task_id": "TASK_INSPECT_001",
+      "event_type": "TASK_COMPLETED",
+      "timestamp": "2026-09-01T06:00:00.000000",
+      "source_service": "Agent Orchestrator",
+      "actor": "agent_orchestrator",
+      "duration_ms": 12450.0,
+      "details": {
+        "completion_status": "completed",
+        "artifacts_count": 1,
+        "egress_bytes": 0
+      }
+    }
+  ]
+}
