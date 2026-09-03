@@ -21,7 +21,7 @@ def get_model_router() -> ModelRouter:
 
 @lru_cache()
 def get_agent_service() -> AgentService:
-    return AgentService()
+    return AgentService(audit_service=get_audit_service())
 
 
 @lru_cache()

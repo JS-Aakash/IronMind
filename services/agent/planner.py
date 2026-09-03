@@ -164,29 +164,48 @@ class AgentPlanner:
                 ),
             ]
 
-        # 4. General Industrial Engineering Reasoning & QA
+        # 4. General Engineering Reasoning, Technical Discussion & Direct QA
         else:
-            plan = [
-                PlanStep(
-                    step_id=generate_uuid("STEP"),
-                    order=1,
-                    title="Context & Knowledge Retrieval",
-                    description=f"Retrieve technical documentation relevant to: '{goal}'.",
-                    tool_name="knowledge.search",
-                    tool_args={"query": goal, "limit": 3},
-                    assigned_model=routing.stage_models.get("reasoning", "qwen3:8b"),
-                    status=AgentStatus.PENDING,
-                ),
-                PlanStep(
-                    step_id=generate_uuid("STEP"),
-                    order=2,
-                    title="Technical Analysis & Synthesis",
-                    description="Synthesize engineering findings with grounded operational guidance.",
-                    tool_name=None,
-                    tool_args={},
-                    assigned_model=routing.stage_models.get("reasoning", "qwen3:8b"),
-                    status=AgentStatus.PENDING,
-                ),
-            ]
+            requires_rag = any(k in goal_lower for k in [
+                "sop", "standard", "manual", "procedure", "mrpl", "threshold",
+                "vibration", "pump p-101", "spec", "specification", "guideline",
+                "policy", "api 610", "api 510", "document", "documentation",
+            ])
+            if requires_rag:
+                plan = [
+                    PlanStep(
+                        step_id=generate_uuid("STEP"),
+                        order=1,
+                        title="Context & Knowledge Retrieval",
+                        description=f"Retrieve technical documentation relevant to: '{goal}'.",
+                        tool_name="knowledge.search",
+                        tool_args={"query": goal, "limit": 3},
+                        assigned_model=routing.stage_models.get("reasoning", "qwen3:8b"),
+                        status=AgentStatus.PENDING,
+                    ),
+                    PlanStep(
+                        step_id=generate_uuid("STEP"),
+                        order=2,
+                        title="Technical Analysis & Synthesis",
+                        description="Synthesize engineering findings with grounded operational guidance.",
+                        tool_name=None,
+                        tool_args={},
+                        assigned_model=routing.stage_models.get("reasoning", "qwen3:8b"),
+                        status=AgentStatus.PENDING,
+                    ),
+                ]
+            else:
+                plan = [
+                    PlanStep(
+                        step_id=generate_uuid("STEP"),
+                        order=1,
+                        title="Analysis & Thoughtful Response",
+                        description=f"Provide an insightful, direct, and comprehensive response answering: '{goal}'.",
+                        tool_name=None,
+                        tool_args={},
+                        assigned_model=routing.stage_models.get("reasoning", "qwen3:8b"),
+                        status=AgentStatus.PENDING,
+                    ),
+                ]
 
         return plan

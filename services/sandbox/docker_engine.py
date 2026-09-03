@@ -302,34 +302,39 @@ class LocalIsolatedSandboxEngine:
                 "TMP": str(temp_dir),
             }
 
-            # Run main script
-            proc = await asyncio.create_subprocess_exec(
-                sys.executable,
-                str(main_py),
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                cwd=str(temp_dir),
-                env=safe_env,
-            )
+            # Run main script via thread-safe subprocess execution
+            def _run_sync():
+                import subprocess
+                return subprocess.run(
+                    [sys.executable, str(main_py)],
+                    capture_output=True,
+                    text=True,
+                    cwd=str(temp_dir),
+                    env=safe_env,
+                    timeout=timeout_seconds,
+                )
 
             try:
-                stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
+                proc = await asyncio.to_thread(_run_sync)
                 duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
-                stdout_str = stdout_bytes.decode("utf-8", errors="replace").strip()
-                stderr_str = stderr_bytes.decode("utf-8", errors="replace").strip()
+                stdout_str = proc.stdout.strip()
+                stderr_str = proc.stderr.strip()
 
                 test_results = []
                 # If tests exist and main script succeeded, run pytest
                 if has_tests and proc.returncode == 0:
-                    test_proc = await asyncio.create_subprocess_exec(
-                        sys.executable, "-m", "pytest", "-v", str(temp_dir),
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE,
-                        cwd=str(temp_dir),
-                        env=safe_env,
-                    )
-                    t_out, t_err = await asyncio.wait_for(test_proc.communicate(), timeout=timeout_seconds)
-                    t_out_str = t_out.decode("utf-8", errors="replace")
+                    def _run_pytest():
+                        import subprocess
+                        return subprocess.run(
+                            [sys.executable, "-m", "pytest", "-v", str(temp_dir)],
+                            capture_output=True,
+                            text=True,
+                            cwd=str(temp_dir),
+                            env=safe_env,
+                            timeout=timeout_seconds,
+                        )
+                    test_proc = await asyncio.to_thread(_run_pytest)
+                    t_out_str = test_proc.stdout + "\n" + test_proc.stderr
                     test_results = self._parse_pytest_output(t_out_str)
                     if test_proc.returncode != 0:
                         stderr_str += f"\n[Pytest Failures]:\n{t_out_str}"
@@ -350,17 +355,29 @@ class LocalIsolatedSandboxEngine:
                     cleanup_verified=True,
                 )
 
-            except asyncio.TimeoutError:
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
+            except Exception as e:
+                import subprocess
+                if isinstance(e, subprocess.TimeoutExpired):
+                    duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
+                    return SandboxExecutionResult(
+                        status=SandboxStatus.TIMEOUT.value,
+                        stdout="",
+                        stderr=f"Execution timed out after {timeout_seconds} seconds. Process killed.",
+                        exit_code=-1,
+                        duration_ms=duration_ms,
+                        tests=[],
+                        memory_limit_mb=memory_limit_mb,
+                        cpu_limit=cpu_limit,
+                        network_mode="none",
+                        execution_engine="local_isolated_process",
+                        cleanup_verified=True,
+                    )
                 duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
                 return SandboxExecutionResult(
-                    status=SandboxStatus.TIMEOUT.value,
+                    status=SandboxStatus.FAILURE.value,
                     stdout="",
-                    stderr=f"Execution timed out after {timeout_seconds} seconds. Process killed.",
-                    exit_code=-1,
+                    stderr=f"Isolated process execution failed: {str(e)}",
+                    exit_code=1,
                     duration_ms=duration_ms,
                     tests=[],
                     memory_limit_mb=memory_limit_mb,

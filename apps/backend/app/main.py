@@ -74,3 +74,14 @@ async def root():
         "api_v1": settings.API_V1_PREFIX,
         "sovereignty": "100% Local On-Premise",
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "apps.backend.app.main:app",
+        host="127.0.0.1",
+        port=8000,
+        reload=True,
+        reload_dirs=["apps/backend", "services", "packages"],
+    )

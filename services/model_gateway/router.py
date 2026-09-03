@@ -396,22 +396,22 @@ You MUST return ONLY valid JSON in this exact format:
             ))
             stage_models["reasoning"] = "qwen3:8b"
 
-        # Determine Primary Model
+        # Determine Primary Model: Assign specialist models based on classified requirements
         if request.preferred_model:
             primary_model = request.preferred_model
             routing_reason = f"User override: {request.preferred_model}"
-        elif analysis.requires_coding:
+        elif analysis.requires_coding or (ai_res and ai_res.get("task_type") == "coding"):
             primary_model = "qwen2.5-coder:7b"
-            routing_reason = "Coding capability required: Routed to Qwen2.5-Coder for verified script execution."
+            routing_reason = (ai_res and ai_res.get("routing_reason")) or "Coding capability required: Routed to Qwen2.5-Coder for verified script execution."
         elif analysis.requires_vision and not analysis.requires_coding:
             primary_model = "qwen2.5vl:7b"
-            routing_reason = "Vision capability required: Routed to Qwen2.5-VL for visual document/drawing understanding."
+            routing_reason = (ai_res and ai_res.get("routing_reason")) or "Vision capability required: Routed to Qwen2.5-VL for visual document/drawing understanding."
         elif ai_res and ai_res.get("primary_model") in ["qwen2.5-coder:7b", "qwen2.5vl:7b", "qwen3:8b"]:
             primary_model = ai_res["primary_model"]
-            routing_reason = f"Classified by local AI router (qwen3:0.6b): {ai_res.get('routing_reason', 'Optimal task match')}"
+            routing_reason = ai_res.get("routing_reason") or f"Lightweight AI router (qwen3:0.6b) selected {primary_model}."
         else:
-            primary_model = "qwen3:8b"
-            routing_reason = "General/Reasoning task: Routed to Qwen3 (8B) for high-order planning and knowledge synthesis."
+            primary_model = scores[0].model_name if scores else "qwen3:8b"
+            routing_reason = f"Selected highest scoring model: {primary_model}. General/Reasoning task: Routed to Qwen3 (8B) for high-order planning and knowledge synthesis."
 
         alternatives = [s.model_name for s in scores if s.model_name != primary_model and s.is_available]
 

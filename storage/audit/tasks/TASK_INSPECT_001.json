@@ -35,7 +35,7 @@
   "duration_ms": 12450.0,
   "events": [
     {
-      "event_id": "EVT_996db982",
+      "event_id": "EVT_d2acfdac",
       "task_id": "TASK_INSPECT_001",
       "event_type": "TASK_CREATED",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -47,7 +47,7 @@
       }
     },
     {
-      "event_id": "EVT_593c3fc4",
+      "event_id": "EVT_b2a514ed",
       "task_id": "TASK_INSPECT_001",
       "event_type": "TASK_CLASSIFIED",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -65,7 +65,7 @@
       }
     },
     {
-      "event_id": "EVT_517be34f",
+      "event_id": "EVT_c1ca55d7",
       "task_id": "TASK_INSPECT_001",
       "event_type": "MODEL_SELECTED",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -81,7 +81,7 @@
       }
     },
     {
-      "event_id": "EVT_3702ce32",
+      "event_id": "EVT_f2d64166",
       "task_id": "TASK_INSPECT_001",
       "event_type": "TOOL_CALLED",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -95,7 +95,7 @@
       }
     },
     {
-      "event_id": "EVT_689b7f1f",
+      "event_id": "EVT_660faeab",
       "task_id": "TASK_INSPECT_001",
       "event_type": "MODEL_INFERENCE",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -114,7 +114,7 @@
       }
     },
     {
-      "event_id": "EVT_0e974f9a",
+      "event_id": "EVT_b9b58a2f",
       "task_id": "TASK_INSPECT_001",
       "event_type": "RAG_RETRIEVAL",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -131,7 +131,7 @@
       }
     },
     {
-      "event_id": "EVT_b0568314",
+      "event_id": "EVT_aaeb4c64",
       "task_id": "TASK_INSPECT_001",
       "event_type": "MODEL_INFERENCE",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -147,7 +147,7 @@
       }
     },
     {
-      "event_id": "EVT_69255f51",
+      "event_id": "EVT_fefb04f5",
       "task_id": "TASK_INSPECT_001",
       "event_type": "ARTIFACT_CREATED",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -163,7 +163,7 @@
       }
     },
     {
-      "event_id": "EVT_16630b2b",
+      "event_id": "EVT_f21f07f2",
       "task_id": "TASK_INSPECT_001",
       "event_type": "VERIFICATION",
       "timestamp": "2026-09-01T06:00:00.000000",
@@ -180,7 +180,7 @@
       }
     },
     {
-      "event_id": "EVT_d4ce7030",
+      "event_id": "EVT_6bac9962",
       "task_id": "TASK_INSPECT_001",
       "event_type": "TASK_COMPLETED",
       "timestamp": "2026-09-01T06:00:00.000000",

@@ -71,6 +71,7 @@ class AgentState(BaseModel):
     status: AgentStatus = AgentStatus.PENDING
     plan: List[PlanStep] = Field(default_factory=list)
     current_step_index: int = 0
+    primary_model: Optional[str] = None
     selected_models: Dict[str, str] = Field(default_factory=dict)
     tool_calls: List[ToolCallRecord] = Field(default_factory=list)
     retrieved_context: List[Dict[str, Any]] = Field(default_factory=list)

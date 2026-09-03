@@ -70,80 +70,31 @@ class PythonExecuteTool(BaseTool):
         if not code or not isinstance(code, str) or not code.strip():
             return ToolResult(tool_name=self.name, success=False, error="Argument 'code' must be a non-empty string.")
 
-        # Ensure temp directory in storage/temp
-        temp_dir = Path("storage/temp")
-        temp_dir.mkdir(parents=True, exist_ok=True)
-
         try:
-            with tempfile.NamedTemporaryFile("w", suffix=".py", dir=str(temp_dir), delete=False, encoding="utf-8") as f:
-                script_path = f.name
-                f.write(code)
-        except Exception as e:
-            return ToolResult(tool_name=self.name, success=False, error=f"Failed to prepare sandbox script: {str(e)}")
-
-        start_time = time.perf_counter()
-        try:
-            # Execute in isolated subprocess with current python interpreter (no shell)
-            proc = await asyncio.create_subprocess_exec(
-                sys.executable,
-                script_path,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                env={
-                    **os.environ,
-                    "AIRGAP_SANDBOX": "1",
-                    "PYTHONUNBUFFERED": "1",
-                    "PYTHONDONTWRITEBYTECODE": "1",
-                },
-            )
-
-            try:
-                stdout_data, stderr_data = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-                latency_ms = round((time.perf_counter() - start_time) * 1000, 2)
-                stdout_str = stdout_data.decode("utf-8", errors="replace").strip()
-                stderr_str = stderr_data.decode("utf-8", errors="replace").strip()
-
-                if proc.returncode == 0:
-                    return ToolResult(
-                        tool_name=self.name,
-                        success=True,
-                        output={
-                            "stdout": stdout_str if stdout_str else "[Execution completed with exit code 0]",
-                            "stderr": stderr_str,
-                            "exit_code": 0,
-                            "latency_ms": latency_ms,
-                            "network_egress_bytes": 0,
-                        },
-                        metadata={"exit_code": 0, "latency_ms": latency_ms, "network_egress": "0 bytes"},
-                    )
-                else:
-                    return ToolResult(
-                        tool_name=self.name,
-                        success=False,
-                        error=f"Process exited with non-zero code {proc.returncode}:\n{stderr_str or stdout_str}",
-                        output={"stdout": stdout_str, "stderr": stderr_str, "exit_code": proc.returncode},
-                        metadata={"exit_code": proc.returncode, "latency_ms": latency_ms},
-                    )
-
-            except asyncio.TimeoutError:
-                try:
-                    proc.kill()
-                except Exception:
-                    pass
+            res = await self.sandbox_service.execute_python(code=code, timeout_seconds=timeout)
+            if res.status == "success" or res.exit_code == 0:
+                return ToolResult(
+                    tool_name=self.name,
+                    success=True,
+                    output={
+                        "stdout": res.stdout if res.stdout else "[Execution completed with exit code 0]",
+                        "stderr": res.stderr,
+                        "exit_code": 0,
+                        "latency_ms": res.duration_ms,
+                        "network_egress_bytes": 0,
+                    },
+                    metadata={"exit_code": 0, "latency_ms": res.duration_ms, "network_egress": "0 bytes"},
+                )
+            else:
                 return ToolResult(
                     tool_name=self.name,
                     success=False,
-                    error=f"Sandbox execution timed out after {timeout} seconds.",
-                    metadata={"timeout": timeout},
+                    error=f"Process exited with code {res.exit_code}:\n{res.stderr or res.stdout}",
+                    output={"stdout": res.stdout, "stderr": res.stderr, "exit_code": res.exit_code},
+                    metadata={"exit_code": res.exit_code, "latency_ms": res.duration_ms},
                 )
-
         except Exception as e:
-            return ToolResult(tool_name=self.name, success=False, error=f"Sandbox dispatch failure: {str(e)}")
-        finally:
-            try:
-                Path(script_path).unlink(missing_ok=True)
-            except Exception:
-                pass
+            return ToolResult(tool_name=self.name, success=False, error=f"Sandbox execution error: {str(e)}")
 
 
 # Backward compatibility alias

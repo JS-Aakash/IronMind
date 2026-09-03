@@ -63,13 +63,13 @@ export default function ArtifactsPage() {
   const getDeliverableIcon = (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (["docx", "doc"].includes(ext || "")) {
-      return <FileType className="w-5 h-5 text-indigo-400" />;
+      return <FileType className="w-5 h-5 text-palette-royal" />;
     }
     if (["pdf"].includes(ext || "")) {
       return <FileText className="w-5 h-5 text-rose-400" />;
     }
     if (["py"].includes(ext || "")) {
-      return <FileCode className="w-5 h-5 text-cyan-400" />;
+      return <FileCode className="w-5 h-5 text-palette-periwinkle" />;
     }
     return <FileCheck2 className="w-5 h-5 text-emerald-400" />;
   };
@@ -83,23 +83,23 @@ export default function ArtifactsPage() {
             <FileCheck2 className="w-6 h-6 text-emerald-400" />
             <span>Generated Business Deliverables</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-400">
+          <p className="text-xs md:text-sm text-palette-ice/80">
             Real Microsoft Word (.docx), Python (.py), and Excel (.xlsx) deliverables with SHA-256 cryptographic provenance.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleGenerateSampleApproval}
-            className="shimmer-button flex items-center gap-2 px-4 py-2 rounded-xl text-white font-semibold text-xs transition cursor-pointer shadow-lg shadow-indigo-500/25"
+            className="shimmer-button flex items-center gap-2 px-4 py-2 rounded-xl text-white font-semibold text-xs transition cursor-pointer shadow-lg shadow-palette-royal/30"
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Sparkles className="w-3.5 h-3.5 text-palette-periwinkle" />
             <span>Create Approval DOCX</span>
           </button>
           <button
             onClick={loadArtifacts}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] text-slate-200 text-xs font-semibold transition border border-white/10"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-palette-violet/30 hover:bg-palette-violet/60 text-palette-ice text-xs font-semibold transition border border-palette-periwinkle/20"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-indigo-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-palette-periwinkle" : ""}`} />
             <span>Refresh</span>
           </button>
         </div>
@@ -109,9 +109,9 @@ export default function ArtifactsPage() {
       <div className="space-y-3.5">
         {artifacts.length === 0 ? (
           <div className="p-16 text-center rounded-3xl glass-panel space-y-3">
-            <FileCheck2 className="w-8 h-8 text-slate-600 mx-auto" />
+            <FileCheck2 className="w-8 h-8 text-palette-periwinkle/40 mx-auto" />
             <div className="text-sm font-semibold text-slate-300">No deliverables generated yet</div>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-palette-ice/60 max-w-sm mx-auto">
               Run an approval note or coding task in the Workbench to generate deliverables with cryptographic proofs.
             </p>
           </div>
@@ -126,17 +126,17 @@ export default function ArtifactsPage() {
                 className="glass-panel-interactive p-5 rounded-3xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
               >
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-2xl bg-obsidian-950/90 border border-white/10 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-palette-midnight/90 border border-palette-periwinkle/20 flex items-center justify-center">
                     {getDeliverableIcon(art.filename)}
                   </div>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2.5">
                       <span className="font-bold text-sm text-slate-100">{art.filename}</span>
-                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 uppercase">
+                      <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 uppercase">
                         {art.type || "Deliverable"}
                       </span>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 font-mono">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-palette-ice/70 font-mono">
                       <span>ID: {art.artifact_id}</span>
                       <span>•</span>
                       <span>{sizeKb} KB</span>
@@ -150,17 +150,17 @@ export default function ArtifactsPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-white/5">
+                <div className="flex items-center gap-3 w-full md:w-auto justify-end pt-2 md:pt-0 border-t md:border-t-0 border-palette-periwinkle/15">
                   {art.sha256_hash && (
                     <button
                       onClick={() => handleCopyHash(art.sha256_hash)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-obsidian-950/80 border border-white/10 text-slate-300 hover:text-white text-xs font-mono transition"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-palette-midnight/80 border border-palette-periwinkle/20 text-palette-ice hover:text-white text-xs font-mono transition"
                       title="Copy SHA-256 Hash"
                     >
                       {copiedHash === art.sha256_hash ? (
                         <Check className="w-3.5 h-3.5 text-emerald-400" />
                       ) : (
-                        <Copy className="w-3.5 h-3.5 text-slate-400" />
+                        <Copy className="w-3.5 h-3.5 text-palette-periwinkle/70" />
                       )}
                       <span>{art.sha256_hash.substring(0, 10)}...</span>
                     </button>

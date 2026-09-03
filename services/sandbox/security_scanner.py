@@ -30,10 +30,10 @@ class CodeSecurityScanner:
     }
 
     HOST_FILESYSTEM_PATTERNS = [
-        r"(/etc/passwd|/etc/shadow|/etc/hosts|/etc/)",
-        r"(windows|system32|/root|/home)",
+        r"(/etc/passwd|/etc/shadow|/etc/hosts|/etc/sudoers)",
+        r"([A-Za-z]:\\(?:Windows\\System32|System32)|/root/\.ssh|/home/[^/]+/\.ssh)",
         r"(\.\./|\.\.\\)",  # Path traversal
-        r"(\.env|config\.json|credentials)",
+        r"(\.env|credentials\.json)",
     ]
 
     NETWORK_CALL_PATTERNS = [

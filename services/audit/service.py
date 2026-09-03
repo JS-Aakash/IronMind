@@ -28,7 +28,7 @@ class AuditService:
 
         self._task_trails: Dict[str, TaskAuditSummary] = {}
         self._load_task_trails()
-        if not self._task_trails:
+        if "TASK_CALC_002" not in self._task_trails or "TASK_INSPECT_001" not in self._task_trails:
             self._seed_sample_audit_trail()
 
     def _load_task_trails(self) -> None:
@@ -177,6 +177,58 @@ class AuditService:
         self._task_trails[task_id] = summary
         self._persist_task(task_id)
 
+        # Seed 2: Python pump calculation and sandbox verification
+        task2_id = "TASK_CALC_002"
+        created2 = "2026-09-02T10:15:00.000000"
+        completed2 = "2026-09-02T10:15:08.320000"
+        events2_data = [
+            (AuditEventType.TASK_CREATED, "Core Gateway", "local_operator", 0.0, {"goal": "Calculate efficiency of industrial pump and verify in sandbox."}),
+            (AuditEventType.TASK_CLASSIFIED, "Model Router", "qwen3:0.6b", 38.0, {"task_type": "coding", "required_capabilities": ["coding", "sandbox_execution", "verification"]}),
+            (AuditEventType.MODEL_SELECTED, "Model Router", "router_engine", 15.0, {"primary_model": "qwen2.5-coder:7b", "stages": {"coding": "qwen2.5-coder:7b", "verification": "qwen3:8b"}}),
+            (AuditEventType.MODEL_INFERENCE, "Model Gateway", "qwen2.5-coder:7b", 3200.0, {"model": "qwen2.5-coder:7b", "prompt_tokens": 420, "completion_tokens": 280, "step": "Generate calculation module & test assertions"}),
+            (AuditEventType.SANDBOX_EXECUTION, "Process Sandbox", "isolated_runner", 142.0, {"tool_name": "python.execute_sandbox", "exit_code": 0, "network": "OFF (Air-Gapped)", "passed_tests": 4}),
+            (AuditEventType.ARTIFACT_CREATED, "Artifact Engine", "sandbox_verifier", 45.0, {"artifact_id": "ART_e9a1b821", "filename": "pump_efficiency.py", "type": "python", "sha256": "9c82b13c727a85e13d987e918451f28b49e13b8271a4857b29a1b821481e1942"}),
+            (AuditEventType.VERIFICATION, "Agent Verifier", "agent_verifier", 60.0, {"verification_passed": True, "checks": ["All 4 test cases passed with exit code 0", "Zero input division handled via ValueError", "Pure deterministic logic confirmed"]}),
+            (AuditEventType.TASK_COMPLETED, "Agent Orchestrator", "agent_orchestrator", 8320.0, {"completion_status": "completed", "artifacts_count": 1}),
+        ]
+        evs2 = []
+        for ev_type, src, actor, dur, details in events2_data:
+            ev = AuditEvent(
+                event_id=generate_uuid("EVT"),
+                task_id=task2_id,
+                event_type=ev_type,
+                timestamp=created2,
+                source_service=src,
+                actor=actor,
+                duration_ms=dur,
+                details=details,
+            )
+            evs2.append(ev)
+            self._append_to_ledger(ev)
+
+        summary2 = TaskAuditSummary(
+            task_id=task2_id,
+            user="aakash_engineer",
+            task_goal="Write a Python program to calculate the efficiency of an industrial pump given input power and output power. Validate inputs and run unit tests in sandbox.",
+            task_classification="coding",
+            models_selected=["qwen2.5-coder:7b", "qwen3:8b"],
+            model_calls_count=1,
+            total_tokens=700,
+            tool_calls_count=1,
+            retrieved_documents=[],
+            source_citations=[{"check": "Boundary unit test assertions evaluated to exit code 0."}],
+            sandbox_executions_count=1,
+            generated_artifacts=[{"artifact_id": "ART_e9a1b821", "filename": "pump_efficiency.py", "type": "python"}],
+            errors=[],
+            completion_status="completed",
+            created_at=created2,
+            completed_at=completed2,
+            duration_ms=8320.0,
+            events=evs2,
+        )
+        self._task_trails[task2_id] = summary2
+        self._persist_task(task2_id)
+
     def record_event(
         self,
         task_id: str,
@@ -208,6 +260,18 @@ class AuditService:
         trail = self._task_trails[task_id]
         trail.events.append(event)
 
+        # Update metadata if provided
+        if details.get("goal") and (trail.task_goal == "Autonomous task execution" or not trail.task_goal):
+            trail.task_goal = details["goal"]
+        if details.get("task_type"):
+            trail.task_classification = details["task_type"]
+        if details.get("task_classification"):
+            trail.task_classification = details["task_classification"]
+        if details.get("primary_model"):
+            pm = details["primary_model"]
+            if pm not in trail.models_selected:
+                trail.models_selected.insert(0, pm)
+
         # Update aggregated stats
         if event_type == AuditEventType.MODEL_SELECTED:
             models = details.get("models") or list(details.get("stages", {}).values())
@@ -224,11 +288,19 @@ class AuditService:
             trail.sandbox_executions_count += 1
         elif event_type == AuditEventType.ARTIFACT_CREATED:
             trail.generated_artifacts.append(details)
+        elif event_type == AuditEventType.VERIFICATION:
+            trail.completion_status = "verified"
+            if details.get("checks"):
+                trail.source_citations = [{"finding": str(f)} for f in details.get("checks", [])]
         elif event_type == AuditEventType.TASK_COMPLETED:
             trail.completion_status = "completed"
             trail.completed_at = datetime.utcnow().isoformat()
             if duration_ms:
                 trail.duration_ms = duration_ms
+            if details.get("artifacts"):
+                for art in details["artifacts"]:
+                    if art not in trail.generated_artifacts:
+                        trail.generated_artifacts.append(art)
         elif event_type == AuditEventType.TASK_FAILED:
             trail.completion_status = "failed"
             trail.completed_at = datetime.utcnow().isoformat()

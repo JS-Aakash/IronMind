@@ -17,22 +17,22 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ""
       case "completed":
       case "verified":
       case "verified_local":
-        return "bg-emerald-500/10 text-emerald-300 border-emerald-500/25";
+        return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
       case "standby":
       case "pending":
       case "classifying":
       case "planning":
-        return "bg-amber-500/10 text-amber-300 border-amber-500/25";
+        return "bg-amber-500/15 text-amber-300 border-amber-500/30";
       case "executing":
       case "verifying":
       case "processing":
-        return "bg-indigo-500/15 text-indigo-300 border-indigo-500/30 animate-pulse";
+        return "bg-palette-royal/30 text-palette-periwinkle border-palette-periwinkle/40 animate-pulse";
       case "failed":
       case "error":
       case "breach":
-        return "bg-rose-500/10 text-rose-300 border-rose-500/25";
+        return "bg-rose-500/15 text-rose-300 border-rose-500/30";
       default:
-        return "bg-slate-800/80 text-slate-300 border-white/10";
+        return "bg-palette-violet/30 text-palette-ice border-palette-periwinkle/20";
     }
   };
 

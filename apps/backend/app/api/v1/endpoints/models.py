@@ -161,19 +161,25 @@ async def test_qwen3_endpoint(
     return response
 
 
+@router.get("/status")
+async def get_models_status_endpoint(model_svc: ModelService = Depends(get_model_gateway_service)):
+    """Get real-time operational status and memory residency for all 4 primary industrial models."""
+    return await model_svc.get_models_status()
+
+
 @router.post("/{model_id}/load", response_model=ModelInfo)
 async def load_model(
     model_id: str,
     model_svc: ModelService = Depends(get_model_gateway_service),
     sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service),
 ):
-    """Mark an open-weight model as loaded into local VRAM."""
+    """Preload model into local VRAM with keep_alive=-1 to eliminate cold-start latency."""
     try:
-        model = model_svc.load_model(model_id)
+        model = await model_svc.load_model(model_id)
         sovereignty_svc.log_event(
             event_type="MODEL_LOADED",
             source_service="Model Gateway",
-            details={"model_id": model_id, "name": model.name},
+            details={"model_id": model_id, "name": model.name, "status": "LOADED • WARM"},
         )
         return model
     except ValueError as e:
@@ -186,13 +192,13 @@ async def unload_model(
     model_svc: ModelService = Depends(get_model_gateway_service),
     sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service),
 ):
-    """Unload an open-weight model from local VRAM to free GPU memory."""
+    """Explicitly release model from local VRAM to free GPU/system memory."""
     try:
-        model = model_svc.unload_model(model_id)
+        model = await model_svc.unload_model(model_id)
         sovereignty_svc.log_event(
             event_type="MODEL_UNLOADED",
             source_service="Model Gateway",
-            details={"model_id": model_id, "name": model.name},
+            details={"model_id": model_id, "name": model.name, "status": "UNLOADED"},
         )
         return model
     except ValueError as e:

@@ -95,7 +95,7 @@ ollama pull qwen2.5vl:7b
 python -m pip install -r apps/backend/requirements.txt
 
 # Start FastAPI backend (port 8000)
-python -m uvicorn apps.backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn apps.backend.app.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir apps/backend --reload-dir services --reload-dir packages
 ```
 - API Docs: `http://127.0.0.1:8000/docs`
 - Health: `http://127.0.0.1:8000/health`

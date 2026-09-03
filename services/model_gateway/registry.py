@@ -98,11 +98,21 @@ class ModelRegistry:
         """Retrieve model definition by identifier or alias."""
         if name in self._models:
             return self._models[name]
-        # Normalize and check partial match (e.g. qwen3 vs qwen3:8b)
         clean_name = name.lower().strip()
+        # 1. Exact match (case-insensitive)
         for key, val in self._models.items():
-            if key.lower() == clean_name or key.lower().split(":")[0] == clean_name:
+            if key.lower() == clean_name:
                 return val
+        # 2. Normalized match without hyphens (e.g. qwen2.5-vl:7b vs qwen2.5vl:7b)
+        clean_no_hyphen = clean_name.replace("-", "")
+        for key, val in self._models.items():
+            if key.lower().replace("-", "") == clean_no_hyphen:
+                return val
+        # 3. Base name match only if no tag was supplied in the request
+        if ":" not in clean_name:
+            for key, val in self._models.items():
+                if key.lower().split(":")[0] == clean_name:
+                    return val
         return None
 
     def list_models(self, enabled_only: bool = True) -> List[ModelDefinition]:
