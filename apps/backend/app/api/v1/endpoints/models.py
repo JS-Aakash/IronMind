@@ -3,6 +3,9 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 
+import logging
+from pydantic import BaseModel
+
 from apps.backend.app.core.dependencies import get_model_gateway_service, get_sovereignty_service
 from packages.shared.models.enums import ModelRole
 from packages.shared.models.schemas import ModelInfo
@@ -14,13 +17,64 @@ from services.model_gateway.models import (
 from services.model_gateway.service import ModelService
 from services.sovereignty import SovereigntyService
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/models", tags=["Model Gateway"])
+
+
+class ModelConfigureRequest(BaseModel):
+    role: str
+    model_tag: str
+    display_name: Optional[str] = None
 
 
 @router.get("", response_model=List[ModelInfo])
 async def list_models(model_svc: ModelService = Depends(get_model_gateway_service)):
     """List all registered on-premise open-weight models."""
     return model_svc.list_models()
+
+
+@router.get("/installed")
+async def get_installed_models(model_svc: ModelService = Depends(get_model_gateway_service)):
+    """List all open-weight models installed and available in local Ollama."""
+    models = await model_svc.get_installed_ollama_models()
+    return {"models": models}
+
+
+@router.post("/configure")
+async def configure_model_role(
+    req: ModelConfigureRequest,
+    model_svc: ModelService = Depends(get_model_gateway_service),
+    sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service),
+):
+    """Dynamically assign any local model tag to a functional role (routing, reasoning, coding, vision)."""
+    try:
+        updated_def = model_svc.registry.set_model_for_role(
+            role=req.role,
+            model_tag=req.model_tag,
+            display_name=req.display_name,
+            save=True,
+        )
+        sovereignty_svc.log_event(
+            event_type="MODEL_ROLE_CONFIGURED",
+            source_service="Model Gateway",
+            details={
+                "role": req.role,
+                "model_tag": req.model_tag,
+                "display_name": updated_def.display_name,
+            },
+        )
+        status_list = await model_svc.get_models_status()
+        return {
+            "status": "success",
+            "role": req.role,
+            "model_tag": req.model_tag,
+            "display_name": updated_def.display_name,
+            "models": status_list,
+        }
+    except Exception as e:
+        logger.error("Error configuring model role %s: %s", req.role, str(e))
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/route", response_model=ModelInfo)

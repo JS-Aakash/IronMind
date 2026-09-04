@@ -1,0 +1,211 @@
+{
+  "task_id": "TASK_59595e95",
+  "user": "local_operator",
+  "task_goal": "Write Python code to calculate pump efficiency and test in sandbox",
+  "task_classification": "coding",
+  "models_selected": [
+    "qwen2.5-coder:7b",
+    "qwen3:8b"
+  ],
+  "model_calls_count": 2,
+  "total_tokens": 912,
+  "tool_calls_count": 0,
+  "retrieved_documents": [],
+  "source_citations": [
+    {
+      "finding": "Python script and assertions executed successfully with exit code 0."
+    },
+    {
+      "finding": "Artifact 'verified_script.py' verified with SHA-256 signature: 75724933df92... (PYTHON)"
+    },
+    {
+      "finding": "Captured 3 grounded observations across workflow steps."
+    }
+  ],
+  "sandbox_executions_count": 1,
+  "generated_artifacts": [
+    {
+      "artifact_id": "ART_7126a824",
+      "task_id": "TASK_59595e95",
+      "filename": "verified_script.py",
+      "type": "python",
+      "size_bytes": 681,
+      "sha256_hash": "75724933df922d626057dc22b07aba6b2089d7fd67f6633fe205195feee532c1",
+      "file_path": "storage\\artifacts\\verified_script.py",
+      "download_url": "/api/v1/artifacts/ART_7126a824/download",
+      "verification_status": "VERIFIED_PASSED"
+    }
+  ],
+  "errors": [],
+  "completion_status": "completed",
+  "created_at": "2026-09-04T11:14:07.918925",
+  "completed_at": "2026-09-04T11:14:15.979327",
+  "duration_ms": 8062.360999999999,
+  "events": [
+    {
+      "event_id": "EVT_fb1032a7",
+      "task_id": "TASK_59595e95",
+      "event_type": "TASK_CREATED",
+      "timestamp": "2026-09-04T11:14:07.918925",
+      "source_service": "Agent Orchestrator",
+      "actor": "local_operator",
+      "duration_ms": null,
+      "details": {
+        "goal": "Write Python code to calculate pump efficiency and test in sandbox",
+        "task_type": "coding"
+      }
+    },
+    {
+      "event_id": "EVT_457f4bc1",
+      "task_id": "TASK_59595e95",
+      "event_type": "TASK_CLASSIFIED",
+      "timestamp": "2026-09-04T11:14:15.468161",
+      "source_service": "Model Router",
+      "actor": "qwen3:0.6b",
+      "duration_ms": null,
+      "details": {
+        "task_type": "coding",
+        "required_capabilities": [
+          "coding",
+          "sandbox_execution",
+          "code_reasoning",
+          "python",
+          "artifact_generation",
+          "reasoning",
+          "planning"
+        ],
+        "goal": "Write Python code to calculate pump efficiency and test in sandbox"
+      }
+    },
+    {
+      "event_id": "EVT_e173f0d7",
+      "task_id": "TASK_59595e95",
+      "event_type": "MODEL_SELECTED",
+      "timestamp": "2026-09-04T11:14:15.474981",
+      "source_service": "Model Router",
+      "actor": "router_engine",
+      "duration_ms": null,
+      "details": {
+        "primary_model": "qwen2.5-coder:7b",
+        "stages": {
+          "coding": "qwen2.5-coder:7b",
+          "reasoning": "qwen3:8b"
+        },
+        "reason": "Coding capability required: Routed to qwen2.5-coder:7b for verified script execution.",
+        "goal": "Write Python code to calculate pump efficiency and test in sandbox"
+      }
+    },
+    {
+      "event_id": "EVT_cc4e230f",
+      "task_id": "TASK_59595e95",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-04T11:14:15.623739",
+      "source_service": "Model Gateway",
+      "actor": "qwen2.5-coder:7b",
+      "duration_ms": null,
+      "details": {
+        "model": "qwen2.5-coder:7b",
+        "prompt_tokens": 450,
+        "completion_tokens": 6,
+        "step": "Generate Python Program & Unit Tests"
+      }
+    },
+    {
+      "event_id": "EVT_776df76b",
+      "task_id": "TASK_59595e95",
+      "event_type": "ARTIFACT_CREATED",
+      "timestamp": "2026-09-04T11:14:15.820524",
+      "source_service": "Artifact Engine",
+      "actor": "sandbox_verifier",
+      "duration_ms": null,
+      "details": {
+        "artifact_id": "ART_7126a824",
+        "task_id": "TASK_59595e95",
+        "filename": "verified_script.py",
+        "type": "python",
+        "size_bytes": 681,
+        "sha256_hash": "75724933df922d626057dc22b07aba6b2089d7fd67f6633fe205195feee532c1",
+        "file_path": "storage\\artifacts\\verified_script.py",
+        "download_url": "/api/v1/artifacts/ART_7126a824/download",
+        "verification_status": "VERIFIED_PASSED"
+      }
+    },
+    {
+      "event_id": "EVT_31420572",
+      "task_id": "TASK_59595e95",
+      "event_type": "SANDBOX_EXECUTION",
+      "timestamp": "2026-09-04T11:14:15.843465",
+      "source_service": "Process Sandbox",
+      "actor": "isolated_subprocess",
+      "duration_ms": null,
+      "details": {
+        "tool_name": "python.execute_sandbox",
+        "exit_code": 0,
+        "network": "OFF (Air-Gapped)",
+        "step": "Execute Code in Air-Gapped Sandbox"
+      }
+    },
+    {
+      "event_id": "EVT_2d6f27b7",
+      "task_id": "TASK_59595e95",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-04T11:14:15.968665",
+      "source_service": "Model Gateway",
+      "actor": "qwen3:8b",
+      "duration_ms": null,
+      "details": {
+        "model": "qwen3:8b",
+        "prompt_tokens": 450,
+        "completion_tokens": 6,
+        "step": "Verify Computational & Test Results"
+      }
+    },
+    {
+      "event_id": "EVT_a80ab52b",
+      "task_id": "TASK_59595e95",
+      "event_type": "VERIFICATION",
+      "timestamp": "2026-09-04T11:14:15.975177",
+      "source_service": "Agent Verifier",
+      "actor": "agent_orchestrator",
+      "duration_ms": null,
+      "details": {
+        "verification_passed": true,
+        "checks": [
+          "Python script and assertions executed successfully with exit code 0.",
+          "Artifact 'verified_script.py' verified with SHA-256 signature: 75724933df92... (PYTHON)",
+          "Captured 3 grounded observations across workflow steps."
+        ],
+        "recommendation": "Execution validated. Deliverable confirmed.",
+        "primary_model": "qwen2.5-coder:7b"
+      }
+    },
+    {
+      "event_id": "EVT_f31488e1",
+      "task_id": "TASK_59595e95",
+      "event_type": "TASK_COMPLETED",
+      "timestamp": "2026-09-04T11:14:15.979327",
+      "source_service": "Agent Orchestrator",
+      "actor": "agent_orchestrator",
+      "duration_ms": 8062.360999999999,
+      "details": {
+        "completion_status": "completed",
+        "artifacts_count": 1,
+        "primary_model": "qwen2.5-coder:7b",
+        "goal": "Write Python code to calculate pump efficiency and test in sandbox",
+        "artifacts": [
+          {
+            "artifact_id": "ART_7126a824",
+            "task_id": "TASK_59595e95",
+            "filename": "verified_script.py",
+            "type": "python",
+            "size_bytes": 681,
+            "sha256_hash": "75724933df922d626057dc22b07aba6b2089d7fd67f6633fe205195feee532c1",
+            "file_path": "storage\\artifacts\\verified_script.py",
+            "download_url": "/api/v1/artifacts/ART_7126a824/download",
+            "verification_status": "VERIFIED_PASSED"
+          }
+        ]
+      }
+    }
+  ]
+}

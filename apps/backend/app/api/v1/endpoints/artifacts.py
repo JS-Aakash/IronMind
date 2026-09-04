@@ -32,6 +32,15 @@ async def get_artifact(artifact_id: str, artifacts_svc: ArtifactsService = Depen
     return artifact
 
 
+@router.delete("/{artifact_id}")
+async def delete_artifact(artifact_id: str, artifacts_svc: ArtifactsService = Depends(get_artifacts_service)):
+    """Permanently delete a business deliverable and remove from registry."""
+    success = artifacts_svc.delete_artifact(artifact_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Artifact {artifact_id} not found.")
+    return {"status": "deleted", "artifact_id": artifact_id}
+
+
 @router.get("/{artifact_id}/download")
 async def download_artifact_file(artifact_id: str, artifacts_svc: ArtifactsService = Depends(get_artifacts_service)):
     """Download the real, generated binary/text artifact file."""

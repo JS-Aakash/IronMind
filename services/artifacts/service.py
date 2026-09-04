@@ -134,6 +134,36 @@ class ArtifactsService:
 
         return None
 
+    def delete_artifact(self, artifact_id: str) -> bool:
+        """Permanently delete artifact file from disk and remove from registry."""
+        rec = self.get_artifact(artifact_id)
+        if not rec:
+            return False
+
+        # Delete physical file from disk
+        file_path = self.get_artifact_file_path(artifact_id)
+        if file_path and file_path.exists():
+            try:
+                file_path.unlink()
+            except Exception as e:
+                logger.warning("Failed to delete artifact file %s: %s", file_path, e)
+
+        # Remove from in-memory dictionary
+        if rec.artifact_id in self._artifacts:
+            del self._artifacts[rec.artifact_id]
+        for k in list(self._artifacts.keys()):
+            if k.lower() == artifact_id.lower():
+                del self._artifacts[k]
+
+        self._save_registry()
+
+        self.sovereignty_service.log_event(
+            event_type="ARTIFACT_DELETED",
+            source_service="Artifact Engine",
+            details={"artifact_id": artifact_id, "filename": rec.filename},
+        )
+        return True
+
     def register_artifact(self, record: Any) -> GeneratedArtifactRecord:
         """Register a generated artifact into persistence and sovereignty audit log."""
         if isinstance(record, dict):

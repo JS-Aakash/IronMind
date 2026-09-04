@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Any, AsyncIterator, Dict, List, Optional
 import httpx
@@ -38,6 +39,10 @@ class ModelService:
             "ollama": OllamaProvider(base_url=self.ollama_base_url),
             "mock": MockProvider(provider_name="mock"),
         }
+        self._router_pinned: bool = True
+        self._active_gpu_model: Optional[str] = None
+        self._loading_model_id: Optional[str] = None
+        self._loading_lock = asyncio.Lock()
 
     def register_provider(self, provider: ModelProvider) -> None:
         """Register a new inference provider (e.g. vLLM, TensorRT-LLM)."""
@@ -193,13 +198,16 @@ class ModelService:
 
     def route_task_to_model(self, role: ModelRole) -> Optional[ModelInfo]:
         """Find best matching model for capability role."""
-        matching = self.registry.find_by_role(role)
-        if not matching:
-            # Fallback to first enabled model
+        model_name = self.registry.get_model_for_role(role)
+        m = self.registry.get_model(model_name)
+        if not m:
+            matching = self.registry.find_by_role(role)
+            m = matching[0] if matching else None
+        if not m:
             matching = self.registry.list_models(enabled_only=True)
-        if not matching:
+            m = matching[0] if matching else None
+        if not m:
             return None
-        m = matching[0]
         return ModelInfo(
             id=m.name,
             name=m.display_name,
@@ -242,19 +250,37 @@ class ModelService:
             logger.debug("Could not query Ollama /api/ps: %s", str(e))
         return []
 
+    async def get_installed_ollama_models(self) -> List[str]:
+        """Fetch all downloaded models in local Ollama instance."""
+        try:
+            async with httpx.AsyncClient(timeout=4.0) as client:
+                res = await client.get(f"{self.ollama_base_url}/api/tags")
+                if res.status_code == 200:
+                    data = res.json()
+                    models = [m.get("name", "") for m in data.get("models", []) if m.get("name")]
+                    if models:
+                        return models
+        except Exception as e:
+            logger.debug("Could not query Ollama /api/tags: %s", e)
+
+        return ["qwen3:0.6b", "qwen3:8b", "qwen3:14b", "qwen2.5-coder:7b", "qwen2.5-coder:14b", "qwen2.5vl:7b"]
+
     async def get_models_status(self) -> List[Dict[str, Any]]:
         """Get real-time operational status and memory residency for all 4 primary industrial models."""
         running_models = await self.get_running_ollama_models()
 
-        models_meta = [
-            ("qwen3:0.6b", "Qwen3:0.6B - Router", "Fast AI Task Classifier", ModelRole.ROUTING, 450),
-            ("qwen3:8b", "Qwen3:8B - Reasoning", "Industrial Reasoning & Planning", ModelRole.REASONING, 5000),
-            ("qwen2.5-coder:7b", "Qwen2.5-Coder:7B - Coding", "Python & Sandbox Verification", ModelRole.CODING, 4500),
-            ("qwen2.5vl:7b", "Qwen2.5-VL:7B - Vision", "Multimodal & Engineering Drawings", ModelRole.VISION, 5500),
+        role_configs = [
+            ("routing", ModelRole.ROUTING, "Router", "Fast AI Task Classifier", 450),
+            ("reasoning", ModelRole.REASONING, "Reasoning", "Industrial Reasoning & Planning", 5000),
+            ("coding", ModelRole.CODING, "Coding", "Python & Sandbox Verification", 4500),
+            ("vision", ModelRole.VISION, "Vision", "Multimodal & Engineering Drawings", 5500),
         ]
 
         result = []
-        for model_id, display_name, description, role, est_vram in models_meta:
+        for role_key, role_enum, role_title, default_desc, default_vram in role_configs:
+            model_id = self.registry.get_model_for_role(role_enum)
+            model_def = self.registry.get_model(model_id)
+
             m_info = None
             for m in running_models:
                 running_name = m.get("name", "")
@@ -263,91 +289,154 @@ class ModelService:
                     break
 
             is_warm = m_info is not None
+            is_loading = self._loading_model_id is not None and self._model_matches(self._loading_model_id, model_id)
             vram_mb = int(m_info.get("size_vram", 0) / (1024 * 1024)) if (m_info and m_info.get("size_vram")) else 0
+
+            status_str = "LOADING" if is_loading else ("LOADED • WARM" if is_warm else "UNLOADED")
+            display_name = f"{model_id} - {role_title}"
+            desc = model_def.description if model_def else default_desc
+            est_vram = model_def.vram_estimate_mb if model_def else default_vram
 
             result.append({
                 "id": model_id,
                 "name": model_id,
                 "display_name": display_name,
-                "description": description,
-                "role": role.value if hasattr(role, "value") else str(role),
-                "status": "LOADED • WARM" if is_warm else "UNLOADED",
-                "is_warm": is_warm,
-                "vram_usage_mb": vram_mb if vram_mb > 0 else (est_vram if is_warm else 0),
+                "description": desc,
+                "role": role_key,
+                "role_title": role_title,
+                "status": status_str,
+                "is_warm": is_warm or is_loading,
+                "is_loading": is_loading,
+                "vram_usage_mb": vram_mb if vram_mb > 0 else (est_vram if (is_warm or is_loading) else 0),
                 "expires_at": m_info.get("expires_at") if m_info else None,
             })
 
         return result
 
     async def load_model(self, model_id: str) -> ModelInfo:
-        """Preload model into local VRAM using Ollama keep_alive=-1 to eliminate cold start."""
-        model = self.registry.get_model(model_id)
-        target_name = model.name if model else model_id
+        """Preload model into memory using Ollama keep_alive=-1 to eliminate cold start."""
+        async with self._loading_lock:
+            model = self.registry.get_model(model_id)
+            target_name = model.name if model else model_id
+            self._loading_model_id = target_name
 
-        # Call Ollama /api/generate with keep_alive=-1 (indefinite warm residency)
-        try:
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                res = await client.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json={"model": target_name, "keep_alive": -1},
+            try:
+                router_tag = self.registry.get_model_for_role(ModelRole.ROUTING)
+                is_router = (
+                    self._model_matches(router_tag, target_name)
+                    or "0.6b" in target_name.lower()
+                    or "0.5b" in target_name.lower()
                 )
-                if res.status_code != 200:
-                    logger.warning("Ollama pre-warm returned HTTP %s: %s", res.status_code, res.text)
-        except Exception as e:
-            logger.error("Failed to warm-load model '%s' in Ollama: %s", target_name, str(e))
 
-        if model:
-            model.enabled = True
+                if is_router:
+                    # Router runs on CPU (0 bytes GPU VRAM)
+                    load_payload: Dict[str, Any] = {
+                        "model": target_name,
+                        "prompt": "",
+                        "keep_alive": -1,
+                        "options": {"num_gpu": 0, "num_ctx": 2048},
+                    }
+                    async with httpx.AsyncClient(timeout=60.0) as client:
+                        await client.post(
+                            f"{self.ollama_base_url}/api/generate",
+                            json=load_payload,
+                        )
+                    self._router_pinned = True
+                else:
+                    # Specialist GPU model
+                    load_payload = {
+                        "model": target_name,
+                        "prompt": "",
+                        "keep_alive": -1,
+                        "options": {"num_ctx": 2048},
+                    }
+                    async with httpx.AsyncClient(timeout=120.0) as client:
+                        res = await client.post(
+                            f"{self.ollama_base_url}/api/generate",
+                            json=load_payload,
+                        )
+                        if res.status_code != 200:
+                            logger.warning("Ollama load returned HTTP %s: %s", res.status_code, res.text)
+                    self._active_gpu_model = target_name
 
-        running_models = await self.get_running_ollama_models()
-        is_warm = any(self._model_matches(target_name, m.get("name", "")) for m in running_models)
-        actual_vram = model.vram_estimate_mb if model else 4500
-        for m in running_models:
-            if self._model_matches(target_name, m.get("name", "")):
-                actual_vram = int(m.get("size_vram", 0) / (1024 * 1024))
-                break
+                    # Concurrently reinforce router model on CPU so both stay warm
+                    if self._router_pinned:
+                        router_payload: Dict[str, Any] = {
+                            "model": router_tag,
+                            "prompt": "",
+                            "keep_alive": -1,
+                            "options": {"num_gpu": 0, "num_ctx": 2048},
+                        }
+                        try:
+                            async with httpx.AsyncClient(timeout=30.0) as client:
+                                await client.post(f"{self.ollama_base_url}/api/generate", json=router_payload)
+                        except Exception as ex:
+                            logger.debug("Could not reinforce router model: %s", ex)
 
-        return ModelInfo(
-            id=model.name if model else target_name,
-            name=model.display_name if model else target_name,
-            role=model.role if model else ModelRole.REASONING,
-            version=model.name if model else target_name,
-            provider="ollama",
-            capabilities=model.capabilities if model else ["inference"],
-            vram_usage_mb=int(actual_vram),
-            context_length=model.context_length if model else 8192,
-            status=ModelStatus.LOADED,
-        )
+                if model:
+                    model.enabled = True
+
+                running_models = await self.get_running_ollama_models()
+                actual_vram = model.vram_estimate_mb if model else 4500
+                for m in running_models:
+                    if self._model_matches(target_name, m.get("name", "")):
+                        actual_vram = int(m.get("size_vram", 0) / (1024 * 1024))
+                        break
+
+                return ModelInfo(
+                    id=model.name if model else target_name,
+                    name=model.display_name if model else target_name,
+                    role=model.role if model else ModelRole.REASONING,
+                    version=model.name if model else target_name,
+                    provider="ollama",
+                    capabilities=model.capabilities if model else ["inference"],
+                    vram_usage_mb=int(actual_vram),
+                    context_length=model.context_length if model else 8192,
+                    status=ModelStatus.LOADED,
+                )
+            finally:
+                self._loading_model_id = None
 
     async def unload_model(self, model_id: str) -> ModelInfo:
-        """Explicitly unload model from local VRAM using Ollama keep_alive=0."""
-        model = self.registry.get_model(model_id)
-        target_name = model.name if model else model_id
+        """Explicitly unload model from memory using Ollama keep_alive=0."""
+        async with self._loading_lock:
+            model = self.registry.get_model(model_id)
+            target_name = model.name if model else model_id
+            self._loading_model_id = target_name
 
-        # Call Ollama /api/generate with keep_alive=0 (immediate release)
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                await client.post(
-                    f"{self.ollama_base_url}/api/generate",
-                    json={"model": target_name, "keep_alive": 0},
+            try:
+                is_router = "0.6b" in target_name.lower()
+                if is_router:
+                    self._router_pinned = False
+                elif self._active_gpu_model and self._model_matches(self._active_gpu_model, target_name):
+                    self._active_gpu_model = None
+
+                # Call Ollama /api/generate with keep_alive=0 (immediate release)
+                try:
+                    async with httpx.AsyncClient(timeout=30.0) as client:
+                        await client.post(
+                            f"{self.ollama_base_url}/api/generate",
+                            json={"model": target_name, "keep_alive": 0},
+                        )
+                except Exception as e:
+                    logger.warning("Error releasing model '%s' from Ollama: %s", target_name, str(e))
+
+                if model:
+                    model.enabled = False
+
+                return ModelInfo(
+                    id=model.name if model else target_name,
+                    name=model.display_name if model else target_name,
+                    role=model.role if model else ModelRole.REASONING,
+                    version=model.name if model else target_name,
+                    provider="ollama",
+                    capabilities=model.capabilities if model else ["inference"],
+                    vram_usage_mb=0,
+                    context_length=model.context_length if model else 8192,
+                    status=ModelStatus.UNLOADED,
                 )
-        except Exception as e:
-            logger.warning("Error releasing model '%s' from Ollama: %s", target_name, str(e))
-
-        if model:
-            model.enabled = False
-
-        return ModelInfo(
-            id=model.name if model else target_name,
-            name=model.display_name if model else target_name,
-            role=model.role if model else ModelRole.REASONING,
-            version=model.name if model else target_name,
-            provider="ollama",
-            capabilities=model.capabilities if model else ["inference"],
-            vram_usage_mb=0,
-            context_length=model.context_length if model else 8192,
-            status=ModelStatus.UNLOADED,
-        )
+            finally:
+                self._loading_model_id = None
 
 
 # Backward compatibility alias

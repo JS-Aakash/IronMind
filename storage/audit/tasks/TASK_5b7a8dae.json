@@ -1,0 +1,210 @@
+{
+  "task_id": "TASK_5b7a8dae",
+  "user": "local_operator",
+  "task_goal": "Write a python code to find max of 2 numbers",
+  "task_classification": "coding",
+  "models_selected": [
+    "qwen2.5-coder:7b",
+    "qwen3:8b"
+  ],
+  "model_calls_count": 2,
+  "total_tokens": 1380,
+  "tool_calls_count": 0,
+  "retrieved_documents": [],
+  "source_citations": [
+    {
+      "finding": "Python script and assertions executed successfully with exit code 0."
+    },
+    {
+      "finding": "Artifact 'verified_script.py' verified with SHA-256 signature: 72bcbfdcdbb4... (PYTHON)"
+    },
+    {
+      "finding": "Captured 3 grounded observations across workflow steps."
+    }
+  ],
+  "sandbox_executions_count": 1,
+  "generated_artifacts": [
+    {
+      "artifact_id": "ART_0fe281ab",
+      "task_id": "TASK_5b7a8dae",
+      "filename": "verified_script.py",
+      "type": "python",
+      "size_bytes": 666,
+      "sha256_hash": "72bcbfdcdbb4da639eb6dd8ef18dfb5620bf1f268d953036b85b4a62cfb135e3",
+      "file_path": "storage\\artifacts\\verified_script.py",
+      "download_url": "/api/v1/artifacts/ART_0fe281ab/download",
+      "verification_status": "VERIFIED_PASSED"
+    }
+  ],
+  "errors": [],
+  "completion_status": "completed",
+  "created_at": "2026-09-04T10:26:38.518659",
+  "completed_at": "2026-09-04T10:28:23.673331",
+  "duration_ms": 105663.52399999999,
+  "events": [
+    {
+      "event_id": "EVT_3da864d8",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "TASK_CREATED",
+      "timestamp": "2026-09-04T10:26:38.518659",
+      "source_service": "Agent Orchestrator",
+      "actor": "local_operator",
+      "duration_ms": null,
+      "details": {
+        "goal": "Write a python code to find max of 2 numbers",
+        "task_type": "coding"
+      }
+    },
+    {
+      "event_id": "EVT_c8e22239",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "TASK_CLASSIFIED",
+      "timestamp": "2026-09-04T10:26:45.068063",
+      "source_service": "Model Router",
+      "actor": "qwen3:0.6b",
+      "duration_ms": null,
+      "details": {
+        "task_type": "coding",
+        "required_capabilities": [
+          "reasoning",
+          "coding",
+          "planning",
+          "python",
+          "artifact_generation",
+          "code_reasoning"
+        ],
+        "goal": "Write a python code to find max of 2 numbers"
+      }
+    },
+    {
+      "event_id": "EVT_154cb160",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "MODEL_SELECTED",
+      "timestamp": "2026-09-04T10:26:45.078073",
+      "source_service": "Model Router",
+      "actor": "router_engine",
+      "duration_ms": null,
+      "details": {
+        "primary_model": "qwen2.5-coder:7b",
+        "stages": {
+          "coding": "qwen2.5-coder:7b",
+          "reasoning": "qwen3:8b"
+        },
+        "reason": "Coding capability required: Routed to qwen2.5-coder:7b for verified script execution.",
+        "goal": "Write a python code to find max of 2 numbers"
+      }
+    },
+    {
+      "event_id": "EVT_c509964a",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-04T10:27:14.185364",
+      "source_service": "Model Gateway",
+      "actor": "qwen2.5-coder:7b",
+      "duration_ms": null,
+      "details": {
+        "model": "qwen2.5-coder:7b",
+        "prompt_tokens": 450,
+        "completion_tokens": 161,
+        "step": "Generate Python Program & Unit Tests"
+      }
+    },
+    {
+      "event_id": "EVT_7f9770e8",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "ARTIFACT_CREATED",
+      "timestamp": "2026-09-04T10:27:14.281988",
+      "source_service": "Artifact Engine",
+      "actor": "sandbox_verifier",
+      "duration_ms": null,
+      "details": {
+        "artifact_id": "ART_0fe281ab",
+        "task_id": "TASK_5b7a8dae",
+        "filename": "verified_script.py",
+        "type": "python",
+        "size_bytes": 666,
+        "sha256_hash": "72bcbfdcdbb4da639eb6dd8ef18dfb5620bf1f268d953036b85b4a62cfb135e3",
+        "file_path": "storage\\artifacts\\verified_script.py",
+        "download_url": "/api/v1/artifacts/ART_0fe281ab/download",
+        "verification_status": "VERIFIED_PASSED"
+      }
+    },
+    {
+      "event_id": "EVT_a8d0c43b",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "SANDBOX_EXECUTION",
+      "timestamp": "2026-09-04T10:27:14.291283",
+      "source_service": "Process Sandbox",
+      "actor": "isolated_subprocess",
+      "duration_ms": null,
+      "details": {
+        "tool_name": "python.execute_sandbox",
+        "exit_code": 0,
+        "network": "OFF (Air-Gapped)",
+        "step": "Execute Code in Air-Gapped Sandbox"
+      }
+    },
+    {
+      "event_id": "EVT_e6c8fe77",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-04T10:28:23.668781",
+      "source_service": "Model Gateway",
+      "actor": "qwen3:8b",
+      "duration_ms": null,
+      "details": {
+        "model": "qwen3:8b",
+        "prompt_tokens": 450,
+        "completion_tokens": 319,
+        "step": "Verify Computational & Test Results"
+      }
+    },
+    {
+      "event_id": "EVT_039da664",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "VERIFICATION",
+      "timestamp": "2026-09-04T10:28:23.671582",
+      "source_service": "Agent Verifier",
+      "actor": "agent_orchestrator",
+      "duration_ms": null,
+      "details": {
+        "verification_passed": true,
+        "checks": [
+          "Python script and assertions executed successfully with exit code 0.",
+          "Artifact 'verified_script.py' verified with SHA-256 signature: 72bcbfdcdbb4... (PYTHON)",
+          "Captured 3 grounded observations across workflow steps."
+        ],
+        "recommendation": "Execution validated. Deliverable confirmed.",
+        "primary_model": "qwen2.5-coder:7b"
+      }
+    },
+    {
+      "event_id": "EVT_19b5bd8a",
+      "task_id": "TASK_5b7a8dae",
+      "event_type": "TASK_COMPLETED",
+      "timestamp": "2026-09-04T10:28:23.673331",
+      "source_service": "Agent Orchestrator",
+      "actor": "agent_orchestrator",
+      "duration_ms": 105663.52399999999,
+      "details": {
+        "completion_status": "completed",
+        "artifacts_count": 1,
+        "primary_model": "qwen2.5-coder:7b",
+        "goal": "Write a python code to find max of 2 numbers",
+        "artifacts": [
+          {
+            "artifact_id": "ART_0fe281ab",
+            "task_id": "TASK_5b7a8dae",
+            "filename": "verified_script.py",
+            "type": "python",
+            "size_bytes": 666,
+            "sha256_hash": "72bcbfdcdbb4da639eb6dd8ef18dfb5620bf1f268d953036b85b4a62cfb135e3",
+            "file_path": "storage\\artifacts\\verified_script.py",
+            "download_url": "/api/v1/artifacts/ART_0fe281ab/download",
+            "verification_status": "VERIFIED_PASSED"
+          }
+        ]
+      }
+    }
+  ]
+}

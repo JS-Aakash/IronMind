@@ -6,17 +6,33 @@ from packages.shared.utils.helpers import generate_uuid
 from services.agent.state import ToolCallRecord
 from services.agent.tools.artifact_tools import GenerateDocxApprovalNoteTool
 from services.agent.tools.base import BaseTool, ToolResult
+from services.agent.tools.calculation_tools import StepByStepCalculationTool
 from services.agent.tools.code_tools import PythonExecuteTool, PythonSandboxTool
-from services.agent.tools.doc_tools import DocumentCreateTool, DocumentOcrParseTool
+from services.agent.tools.doc_tools import (
+    DocumentCreateTool,
+    DocumentModifyDocxTool,
+    DocumentOcrParseTool,
+    DocumentReadDocxTool,
+)
 from services.agent.tools.extended_tools import (
     PdfCreateTool,
     PresentationCreateTool,
     SpreadsheetCreateTool,
 )
-from services.agent.tools.file_tools import FileReadTool, FileWriteTool
+from services.agent.tools.file_tools import (
+    FileCopyTool,
+    FileReadTool,
+    FileRenameTool,
+    FileWriteTool,
+)
 from services.agent.tools.math_tools import CalculatorTool
+from services.agent.tools.presentation_tools import PresentationModifyPptxTool
 from services.agent.tools.rag_tools import KnowledgeSearchTool
 from services.agent.tools.security import PathTraversalError, SecurityViolationError, ToolPermission
+from services.agent.tools.spreadsheet_tools import (
+    SpreadsheetInspectTool,
+    SpreadsheetModifyTool,
+)
 from services.agent.tools.vision_tools import VisionAnalyzeTool
 from services.sovereignty.service import SovereigntyService
 
@@ -51,18 +67,35 @@ class ToolRegistry:
     def _initialize_default_tools(self) -> None:
         """Register the core and extended sovereign industrial tools."""
         tools: List[BaseTool] = [
+            # File Operations
             FileReadTool(),
             FileWriteTool(),
+            FileCopyTool(),
+            FileRenameTool(),
+            # Calculations
             CalculatorTool(),
+            StepByStepCalculationTool(),
+            # Knowledge Retrieval
             KnowledgeSearchTool(),
+            # Code Execution & Sandbox
             PythonExecuteTool(),
             PythonSandboxTool(),  # Alias
+            # Document Tools
             DocumentCreateTool(),
             GenerateDocxApprovalNoteTool(),  # Alias
             DocumentOcrParseTool(),
+            DocumentReadDocxTool(),
+            DocumentModifyDocxTool(),
+            # Spreadsheet Tools
             SpreadsheetCreateTool(),
+            SpreadsheetInspectTool(),
+            SpreadsheetModifyTool(),
+            # Presentation Tools
             PresentationCreateTool(),
+            PresentationModifyPptxTool(),
+            # Report Tools
             PdfCreateTool(),
+            # Vision Tools
             VisionAnalyzeTool(),
         ]
         for t in tools:
@@ -76,6 +109,10 @@ class ToolRegistry:
     def get_tool(self, name: str) -> Optional[BaseTool]:
         """Retrieve tool by identifier."""
         return self._tools.get(name)
+
+    def get_all_tools(self) -> List[BaseTool]:
+        """Retrieve all registered BaseTool instances."""
+        return list(self._tools.values())
 
     def list_tools(self) -> List[Dict[str, Any]]:
         """List metadata, schemas, and required permissions for all registered tools."""

@@ -1,12 +1,15 @@
+import hashlib
 import os
 from pathlib import Path
+import shutil
 from typing import Any, Dict, List, Optional
+
 from services.agent.tools.base import BaseTool, ToolResult
 from services.agent.tools.security import PathTraversalError, ToolPermission, validate_safe_storage_path
 
 
 class FileReadTool(BaseTool):
-    """Safely read local documents or temporary files with strict path traversal checks."""
+    """Safely read local documents or data files with strict path traversal checks and zero mock buffers."""
 
     @property
     def name(self) -> str:
@@ -27,8 +30,8 @@ class FileReadTool(BaseTool):
                 },
                 "max_bytes": {
                     "type": "integer",
-                    "description": "Maximum bytes to read (default: 32768)",
-                    "default": 32768,
+                    "description": "Maximum bytes to read (default: 65536)",
+                    "default": 65536,
                 },
             },
             "required": ["file_path"],
@@ -42,6 +45,7 @@ class FileReadTool(BaseTool):
                 "file_path": {"type": "string"},
                 "content": {"type": "string"},
                 "size_bytes": {"type": "integer"},
+                "sha256_hash": {"type": "string"},
             },
         }
 
@@ -51,14 +55,13 @@ class FileReadTool(BaseTool):
 
     async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
         file_path_str = arguments.get("file_path", "")
-        max_bytes = int(arguments.get("max_bytes", 32768))
+        max_bytes = int(arguments.get("max_bytes", 65536))
 
         if not file_path_str or not isinstance(file_path_str, str):
             return ToolResult(tool_name=self.name, success=False, error="Parameter 'file_path' must be a non-empty string.")
 
         try:
-            # Enforce path traversal defense and storage directory confinement
-            safe_path = validate_safe_storage_path(file_path_str, must_exist=False)
+            safe_path = validate_safe_storage_path(file_path_str, must_exist=True)
         except PathTraversalError as pe:
             return ToolResult(
                 tool_name=self.name,
@@ -66,34 +69,27 @@ class FileReadTool(BaseTool):
                 error=f"Security violation: {str(pe)}",
                 metadata={"security_block": True, "target": file_path_str},
             )
+        except FileNotFoundError as fe:
+            return ToolResult(tool_name=self.name, success=False, error=str(fe))
         except Exception as e:
-            return ToolResult(tool_name=self.name, success=False, error=str(e))
-
-        # If file does not exist on disk, return grounded simulated buffer for demo artifacts
-        if not safe_path.exists():
-            return ToolResult(
-                tool_name=self.name,
-                success=True,
-                output={
-                    "file_path": str(safe_path),
-                    "content": f"[Simulated Storage Buffer for: {safe_path.name}] Equipment: Centrifugal Pump P-101. Measured Vibration: 4.8 mm/s RMS. Bearing Temp: 78.5 C. Status: Requires maintenance review.",
-                    "size_bytes": 185,
-                    "simulated": True,
-                },
-                metadata={"filename": safe_path.name, "simulated": True},
-            )
+            return ToolResult(tool_name=self.name, success=False, error=f"File read error: {str(e)}")
 
         try:
-            content = safe_path.read_text(encoding="utf-8", errors="replace")[:max_bytes]
+            raw_bytes = safe_path.read_bytes()
+            sha256 = hashlib.sha256(raw_bytes).hexdigest()
+            content = raw_bytes[:max_bytes].decode("utf-8", errors="replace")
+
             return ToolResult(
                 tool_name=self.name,
                 success=True,
                 output={
                     "file_path": str(safe_path),
+                    "filename": safe_path.name,
                     "content": content,
-                    "size_bytes": safe_path.stat().st_size,
+                    "size_bytes": len(raw_bytes),
+                    "sha256_hash": sha256,
                 },
-                metadata={"filename": safe_path.name, "size_bytes": safe_path.stat().st_size},
+                metadata={"filename": safe_path.name, "size_bytes": len(raw_bytes), "sha256": sha256},
             )
         except Exception as e:
             return ToolResult(tool_name=self.name, success=False, error=f"File read failed: {str(e)}")
@@ -108,7 +104,7 @@ class FileWriteTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Safely write text, markdown, or script content to an authorized path in sovereign storage."
+        return "Safely write text, markdown, CSV, or script content to an authorized path in sovereign storage."
 
     @property
     def input_schema(self) -> Dict[str, Any]:
@@ -133,6 +129,7 @@ class FileWriteTool(BaseTool):
             "properties": {
                 "file_path": {"type": "string"},
                 "bytes_written": {"type": "integer"},
+                "sha256_hash": {"type": "string"},
             },
         }
 
@@ -151,20 +148,24 @@ class FileWriteTool(BaseTool):
             return ToolResult(tool_name=self.name, success=False, error="Argument 'content' must be a string.")
 
         try:
-            # Combine target directory and filename, then validate safe storage path
             combined_path = f"{target_dir}/{filename}" if not filename.startswith("storage") else filename
-            safe_path = validate_safe_storage_path(combined_path, allow_creation_in="storage/temp")
+            safe_path = validate_safe_storage_path(combined_path, allow_creation_in=target_dir)
             safe_path.parent.mkdir(parents=True, exist_ok=True)
-            safe_path.write_text(content, encoding="utf-8")
+            
+            raw_bytes = content.encode("utf-8")
+            safe_path.write_bytes(raw_bytes)
+            sha256 = hashlib.sha256(raw_bytes).hexdigest()
 
             return ToolResult(
                 tool_name=self.name,
                 success=True,
                 output={
                     "file_path": str(safe_path),
-                    "bytes_written": len(content.encode("utf-8")),
+                    "filename": safe_path.name,
+                    "bytes_written": len(raw_bytes),
+                    "sha256_hash": sha256,
                 },
-                metadata={"file_path": str(safe_path), "bytes_written": len(content.encode("utf-8"))},
+                metadata={"file_path": str(safe_path), "bytes_written": len(raw_bytes), "sha256": sha256},
             )
         except PathTraversalError as pe:
             return ToolResult(
@@ -175,3 +176,151 @@ class FileWriteTool(BaseTool):
             )
         except Exception as e:
             return ToolResult(tool_name=self.name, success=False, error=f"File write failed: {str(e)}")
+
+
+class FileCopyTool(BaseTool):
+    """Safely copy files between authorized sovereign storage partitions."""
+
+    @property
+    def name(self) -> str:
+        return "file.copy"
+
+    @property
+    def description(self) -> str:
+        return "Safely copy an existing file from one sovereign storage location to another (e.g. backup before modification)."
+
+    @property
+    def input_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "source_path": {"type": "string", "description": "Path to source file in storage"},
+                "destination_path": {"type": "string", "description": "Target destination path or directory in storage"},
+            },
+            "required": ["source_path", "destination_path"],
+        }
+
+    @property
+    def output_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "source_path": {"type": "string"},
+                "destination_path": {"type": "string"},
+                "bytes_copied": {"type": "integer"},
+                "sha256_hash": {"type": "string"},
+            },
+        }
+
+    @property
+    def permissions(self) -> List[ToolPermission]:
+        return [ToolPermission.STORAGE_READ, ToolPermission.STORAGE_WRITE]
+
+    async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
+        source_str = arguments.get("source_path", "")
+        dest_str = arguments.get("destination_path", "")
+
+        if not source_str or not dest_str:
+            return ToolResult(tool_name=self.name, success=False, error="Both 'source_path' and 'destination_path' are required.")
+
+        try:
+            safe_source = validate_safe_storage_path(source_str, must_exist=True)
+            
+            # Destination path resolution
+            if dest_str.endswith("/") or dest_str.endswith("\\") or Path(dest_str).is_dir() or not Path(dest_str).suffix:
+                dest_full = f"{dest_str.rstrip('/\\')}/{safe_source.name}"
+            else:
+                dest_full = dest_str
+            safe_dest = validate_safe_storage_path(dest_full, allow_creation_in="storage/artifacts")
+            safe_dest.parent.mkdir(parents=True, exist_ok=True)
+
+            shutil.copy2(str(safe_source), str(safe_dest))
+
+            file_bytes = safe_dest.read_bytes()
+            sha256 = hashlib.sha256(file_bytes).hexdigest()
+
+            return ToolResult(
+                tool_name=self.name,
+                success=True,
+                output={
+                    "source_path": str(safe_source),
+                    "destination_path": str(safe_dest),
+                    "filename": safe_dest.name,
+                    "bytes_copied": len(file_bytes),
+                    "sha256_hash": sha256,
+                },
+                metadata={"source": str(safe_source), "destination": str(safe_dest), "sha256": sha256},
+            )
+        except Exception as e:
+            return ToolResult(tool_name=self.name, success=False, error=f"File copy failed: {str(e)}")
+
+
+class FileRenameTool(BaseTool):
+    """Safely rename or move a file within authorized sovereign storage partitions."""
+
+    @property
+    def name(self) -> str:
+        return "file.rename"
+
+    @property
+    def description(self) -> str:
+        return "Safely rename or move an existing file within authorized sovereign storage directories."
+
+    @property
+    def input_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "source_path": {"type": "string", "description": "Current path to file in storage"},
+                "new_name_or_path": {"type": "string", "description": "New filename or full target path in storage"},
+            },
+            "required": ["source_path", "new_name_or_path"],
+        }
+
+    @property
+    def output_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "old_path": {"type": "string"},
+                "new_path": {"type": "string"},
+            },
+        }
+
+    @property
+    def permissions(self) -> List[ToolPermission]:
+        return [ToolPermission.STORAGE_WRITE]
+
+    async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
+        source_str = arguments.get("source_path") or arguments.get("src_path") or ""
+        new_path_str = arguments.get("new_name_or_path") or arguments.get("new_path") or arguments.get("destination_path") or ""
+
+        if not source_str or not new_path_str:
+            return ToolResult(tool_name=self.name, success=False, error="Both 'source_path' and 'new_name_or_path' are required.")
+
+        try:
+            safe_source = validate_safe_storage_path(source_str, must_exist=True)
+
+            # If user passed just a new name (e.g. "updated_report.docx")
+            if "/" not in new_path_str and "\\" not in new_path_str:
+                safe_dest = safe_source.parent / new_path_str
+            else:
+                safe_dest = validate_safe_storage_path(new_path_str, allow_creation_in="storage/artifacts")
+
+            safe_dest = validate_safe_storage_path(str(safe_dest), allow_creation_in=str(safe_source.parent))
+            safe_dest.parent.mkdir(parents=True, exist_ok=True)
+
+            safe_source.rename(safe_dest)
+
+            return ToolResult(
+                tool_name=self.name,
+                success=True,
+                output={
+                    "old_path": str(safe_source),
+                    "new_path": str(safe_dest),
+                    "new_filename": safe_dest.name,
+                },
+                metadata={"old_path": str(safe_source), "new_path": str(safe_dest)},
+            )
+        except Exception as e:
+            return ToolResult(tool_name=self.name, success=False, error=f"File rename failed: {str(e)}")

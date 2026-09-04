@@ -269,6 +269,19 @@ class LocalIsolatedSandboxEngine:
             main_py = temp_dir / "main.py"
             main_py.write_text(code, encoding="utf-8")
 
+            # Extract any embedded sub-files denoted by '# filename.py' comments
+            # so that relative imports like `from max_of_two import max_of_two` resolve cleanly
+            parts = re.split(r"(?m)^#+\s*([a-zA-Z0-9_]+)\.py\s*$", code)
+            if len(parts) > 1:
+                for i in range(1, len(parts), 2):
+                    sub_fname = parts[i] + ".py"
+                    sub_body = parts[i + 1].strip()
+                    if sub_body:
+                        try:
+                            (temp_dir / sub_fname).write_text(sub_body, encoding="utf-8")
+                        except Exception:
+                            pass
+
             has_tests = False
             if test_files:
                 has_tests = True

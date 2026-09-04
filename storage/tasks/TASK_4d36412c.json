@@ -1,0 +1,556 @@
+{
+  "task_id": "TASK_4d36412c",
+  "user_goal": "Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX.",
+  "task_type": "document_analysis",
+  "status": "completed",
+  "plan": [
+    {
+      "step_id": "STEP_2f52353a",
+      "order": 1,
+      "title": "Multimodal OCR & Inspection Parsing",
+      "description": "Extract equipment readings, vibration levels, and observed anomalies from inspection_p101.pdf.",
+      "tool_name": "document.ocr_parse",
+      "tool_args": {
+        "file_path": "inspection_p101.pdf",
+        "focus_area": "readings_and_abnormalities"
+      },
+      "assigned_model": "qwen2.5vl:7b",
+      "status": "completed",
+      "observation": "Tool 'document.ocr_parse' executed successfully.",
+      "error": null,
+      "started_at": "2026-09-04 07:58:46.854680",
+      "completed_at": "2026-09-04 07:58:46.884818"
+    },
+    {
+      "step_id": "STEP_22917b3d",
+      "order": 2,
+      "title": "Grounded SOP Knowledge Retrieval",
+      "description": "Retrieve governing MRPL maintenance SOPs, safety vibration thresholds, and risk criteria.",
+      "tool_name": "knowledge.search",
+      "tool_args": {
+        "query": "vibration velocity thresholds pump P-101 SOP Section 4.2",
+        "limit": 3
+      },
+      "assigned_model": "qwen3:8b",
+      "status": "completed",
+      "observation": "Tool 'knowledge.search' executed successfully.",
+      "error": null,
+      "started_at": "2026-09-04 07:58:46.884818",
+      "completed_at": "2026-09-04 07:58:46.927672"
+    },
+    {
+      "step_id": "STEP_ffaeba7d",
+      "order": 3,
+      "title": "Reconcile Findings & SOP Evidence Synthesis",
+      "description": "Reconcile empirical measurements (4.8 mm/s vibration) with SOP limits (4.5 mm/s) and draft all 8 required technical sections.",
+      "tool_name": null,
+      "tool_args": {},
+      "assigned_model": "qwen3:8b",
+      "status": "completed",
+      "observation": "[MockResponse from qwen3:8b]: Reasoning completed for prompt 'User Query: Analyze scanned in...'",
+      "error": null,
+      "started_at": "2026-09-04 07:58:46.927672",
+      "completed_at": "2026-09-04 07:58:46.942122"
+    },
+    {
+      "step_id": "STEP_052091ae",
+      "order": 4,
+      "title": "Generate Official MRPL Approval Note (DOCX)",
+      "description": "Produce formal, verified Microsoft Word (.docx) Approval Note deliverable with SHA-256 cryptographic provenance.",
+      "tool_name": "artifact.generate_docx",
+      "tool_args": {
+        "subject": "Approval for Overhaul and Seal Replacement - Pump P-101",
+        "equipment_id": "P-101",
+        "sop_reference": "MRPL SOP Section 4.2"
+      },
+      "assigned_model": "qwen3:8b",
+      "status": "completed",
+      "observation": "Tool 'artifact.generate_docx' executed successfully.",
+      "error": null,
+      "started_at": "2026-09-04 07:58:46.942122",
+      "completed_at": "2026-09-04 07:58:47.218266"
+    }
+  ],
+  "current_step_index": 3,
+  "primary_model": "qwen2.5vl:7b",
+  "selected_models": {
+    "vision": "qwen2.5vl:7b",
+    "reasoning": "qwen3:8b",
+    "primary": "qwen2.5vl:7b"
+  },
+  "tool_calls": [
+    {
+      "call_id": "CALL_c2149a7e",
+      "tool_name": "document.ocr_parse",
+      "arguments": {
+        "file_path": "inspection_p101.pdf",
+        "focus_area": "readings_and_abnormalities"
+      },
+      "output": {
+        "equipment_id": "P-101",
+        "equipment_type": "Centrifugal Slurry Pump (API 610 BB2)",
+        "inspection_date": "2026-08-28",
+        "inspector": "MRPL Mechanical Maintenance Division",
+        "measured_parameters": {
+          "vibration_rms_mm_s": 4.8,
+          "bearing_temperature_c": 78.5,
+          "seal_flush_pressure_bar": 1.8,
+          "suction_pressure_bar": 2.1,
+          "discharge_pressure_bar": 12.4
+        },
+        "abnormalities_observed": [
+          "Drive-end bearing overall vibration (4.8 mm/s) exceeds normal ISO 10816 Zone B limit (4.5 mm/s).",
+          "Minor weeping observed on mechanical seal primary face."
+        ],
+        "visual_p_and_id_tags_detected": [
+          "PT-101",
+          "FT-101",
+          "PSV-102",
+          "P-101A/B"
+        ]
+      },
+      "error": null,
+      "success": true,
+      "latency_ms": 17.56,
+      "called_at": "2026-09-04 07:58:46.873583"
+    },
+    {
+      "call_id": "CALL_a2070637",
+      "tool_name": "knowledge.search",
+      "arguments": {
+        "query": "vibration velocity thresholds pump P-101 SOP Section 4.2",
+        "limit": 3
+      },
+      "output": [
+        {
+          "chunk_id": "CHK_cc734027",
+          "document": "dummy.pdf",
+          "page": 1,
+          "section": null,
+          "text": "t /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<\n\n>> \n  /Type /Page\n>>\nendobj\n13 0 obj\n<<\n/PageMode /UseNone /Pages 15 0 R /Type /Catalog\n>>\nendobj\n14 0 obj\n<<\n/Author (\\(anonymous\\)) /CreationDate (D:20260810090300+00'00') /Creator (\\(unspecified\\)) /Keywords () /ModDate (D:20260810090300+00'00') /Producer (ReportLab PDF Library - \\(opensource\\)) \n  /Subject (\\(unspecified\\)) /Title (\\(anonymous\\)) /Trapped /False\n>>\nendobj\n15 0 obj\n<<\n/Count 7 /Kids [ 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R ] /Type /Pages\n>>\nendobj\n16 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2615\n>>\nstream\nGauHLgMYb:&q/)-e>$Y\"dirr-^+$<#GUIYI9A'IaH\"iHoW[B']gJ,hc?pB+@MTq&)b9f'],(N%CIAtESF/mrL+o_*/DjUU=?bt8_+8c+>C[fC$(fm9fG4k8fn(a6iICT!JmQJ;Wh%K_[e=2E#k7@dQF>i`'YY*m6H_q.[]7V1k0SQ]\"LXK@k`?;GlQA%6h]I]!U.6ZLC6GS*0X,&(s^VT1G=T+5fq1]+'qi&R%JEmFoRn^P0&>7kSFi[oagpLf$A$Y(Y@fS^INJ#XFM)Q@!LU1do^5C:SLV$Q%iT$78\\'*mh_^APKgq[t'jcQ.$X2iu64[%UP<f>\\9bPd^YcBg+'^M2r2Z#mpXk5\\ilQhSApjC%f$lM:-LOhr<KcdLIZ#edmWn$bCID<ObYc4KC;R<QC=GjF'I\\=frV0h!iJA-A;QV#<An8O.6i049p#E$IB2kl@$[/djakpH##J<]\\ihNg7Oq*W]\\Ig&c+5^q[;V?-6E@!Bd=QWMC[`rnK!(nU'ZY`IhKGq[=6Q'.bOIU!BaV<O)Za_JToFhV4`kc=c;diToKC\"cE^0!Sf=LItqt\"DjRN:0+Z5IgJ7[U[e4:iUtU*IBr5N(Hb?iV@BN&)q^%rO+H'n`Z3%pO6*DHK(`;pF;KaU`+irCOVROu=LbUY/;87'@kF9V_kU+0bo$W7:_<(8N;5#BP`j\\`3LXW_;$a)\"EFV%IPmc*A/j!1s3&UI#D5ATjHd38XSCAa<^8YL13[PL%p37rkqJmMJ62_*Zl!/cc`A\\?..U'9$N1&XaT*\"sI0`KNnnZ\"%=H\"g/>h:8AJ)-jT7#Mb%8P#1>i4;FO>CmFYSeXY('3GO)6(1m5-jJ7^(40d@D_\"1po?V`fVpR?-6Ymn\"?\"*o*^e)I:Gl-&N%'lS8hseJJKI3i=dQO\\ce(%Sed)e\"1/>d,)V-j1lp\"T8M9gA*u',P\\Q-=6mNa_@Os</>sZgd&L7Vh2lg*RJfHgXasGSHY*rUj#M(@jcGK2_!)\\j227h#P\"LJ1Aa%\")HZO'!C58U``nXdg3R1'Jh@a,C%\\,d0hn.;7B\">(5R69LVH)j,'sa2Q<_duWB/P&$<p#g)\"$Ve@esQ6WY0oQ-XhN/$M*C?2W8WN8FMb19-5n]W\\1\\l;ICY#S_q.UoqB,*aDS5ej,R@+%G`hoJ3r\"51SCnbc*i4j?7;aA^+31>G\\I)OUXWMZVpUCVAGo4(+fJ$tFc.nAh[lnsH8\\bT+TF#3+#=O`lEVfoeBLGq^D.1)b6om3lLa?aF6PG-e_JBdLedOb$,]-meHu#t:Ig:IjT#AaI5<9akbE82QKI;[9N7>pX8M4KDr/bf$d6M\"a$Z]9H9ek&dQ6O7f9WAU&M..>rVD_3C@_$$Wb5%VpNKJ,Jo0%7G%UMGJCl>4`22N\\5-ZU@ZA0j=*CqMYp*ji-h'dM9opO>PUpSIIZf,!OQF0CK!'qf9*\".+AZL/#4RN<iV9?^2/)'Z:B`En?D!:8M$GOU6757D=Mu0a`%)gm1kFf)7O2JZVmiVT1f7^A\\o(_%PBs_mRa$0$P(,#UX3+U(*i\\-iC:Km=E]m6K*$8SS7kg>Pc?#U-=ZC%<M9,^<hNtN52S*'m2>WH^@A9_t?uHMYRS#,b.7Cc/e8<qAWKKT7dt&1kNWOFDQVj!A;MNmn/;ecBK_@^KpodZ^;`qut5#fHCRF0EMN8>[>O'<C^N$pG=?99Migk[5<=^9K[*G/uqgiYtaq:Ol/Nnut\"V[;k1Z1Y*;?.nmLmMlNnUUV44b:s0P'b\"6!VP/ItEVJBu)k\"6&_GF/E+m38dND*3-U:*nM7%U-PY_h>Kk#th*B;gP#BC/?(5nuHsj7p=sfhrPHFmh$G@E@[H2]5Ed/dqQaPX1@rng%UT=?gXk;V's>/QGYPK-'H)]e7V^+rdmH+o@,^01eurhQ)`;SQ$[n\"QSG<d`EBiN1qRuf&Jc>P+b.S,F<RrYR`cpG3MPXl<Bs),6(WL&j)=%9G4Gd+\">AB0UaU)9:$Y70j%G3Y[WG\"_HL3aLfP2\"`SIkOQH&45[5I^2<pH1Km0'3$%3c>'UF'II(=B?uo2o`[`\"eO?Zr3N0#CiGqSn%LAXbsGp3@$_/6k>KR>S\\g.I)sN0_*KfW.@5B\\N(YWS-*^<E&&\\AAr-Wcp['43oV&*Z_aVK:kMdXYMgU#D8EqsP!m+b@-X+Q>='tiOQ)e@2L(F,_94hY#E''&RmhqF@HVAj^#G@]';/)=JDnW'XiCN+fs9e>crD>5:W9?fY\"i_SIE#<E=^C[MV@NKOablN.n<Uo\"^;RCRDu1WA3>f,@;7N(=o6,8UTZWau!jTc]f9-ET;t'pO3WP+2-1?M9rJ53<.Bop'/gcZee@3ALC?gj[Q;?^g%HYtL63019@e@>K)L\\^fqZCXrkNQVOY^2U*Cm`$b28)Utd:Ht%I;G\\fs_EVL;>cp;SnYF=E6_681[iT/cEdNR!_#.h@&82]Zu_`W&[KY`,:OA+l^S&g8O0QWYV[YX3b'Iq$d-DKGpP(N0.cGj1cnVa5I-8OAgms4;\\V2'8uFIoCMV<kJPmWlb3O+eAd$F&&PR9#Y*Fj4k,86rKABro.i(F3+P-Ck6@6cr\\lU_lY&>V!&F+h<;o]4Q,e*/5'^r=A4tbT6~>endstream\nendobj\n17 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 677\n>>\nstream\nGatUo;/ao;&BE]*.IOG`k1+@=[#`!\\BbEshAT,4d'.5M-m9i#HMYQ\\r\\`mc2&ecZkj8+/;hu3Qk#r?m<qCT/Vmg?S;OWYAQ29:JR5k+lXMoiHM(g1id/[BAgG3*t&>\\@NV=Kat=Ola-tU\"I6S_3tY=\\*uhc%.:bYFU5uFJ@:(,kWH';UY!$;eJ1Q,+)m!p#5&=\\Y>Dmo17nj1=D+lMMXFQ-YN@$-MRY)r92XT:'$Xf:Q:u:D1C#r#2)iM<;^hm_mJCc3V6e!kW,72'6d$=oJa9)aRdV.E7]P[&2k(s/B*#K%c3/`39^=/K`#7m5Bp\\C/Zn`<j!EYH&o0bZ9ZlcQ.NJm1LeKeV`Hdqomc4W(5-@g4RE/eGP0ed^8FDn7`\\@L7,^qTQGpBK[:2ScV?^)G`b0cXDdp+@2\"S-5ljgj/C8lZUCj0tFH0)4?$i7Hd:S8@:Q`Jou2;Hp_&e:i[=':)&,5H><C#?7Q%XHD`jV'AHANW_^;eH`3p9rd6Jnd-K6ll$nK&d2/Lp0'/%Ub-Jd44'UnJmeT;tn<oP6Lc'q.-4qRd<\"@dVbS!`r6*mS*'o\"=^VW'bl9lH(AosBEciQ7Zg$:.\\gcBNPjDd31G*dp`=F3>k5enJd<DnZT<VDE4alJW5to*1PWY::GPOG5-W4ZWPp3NR],?=<=;\\E-bP~>endstream\nendobj\n18 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2521\n>>\nstream\nGatU5gQ(#H&:Ml+bi?-N*)\"$4DLjufRU'=K>FK\\AMS.:KD6]3oQ))'4d#[W(8R:](=]IqA^_4W0ba^\\7L)[r;s$cAUU]>YOL,TVT6ntdP&1sae=T8HslW=,!$6qJdE'%?Zp\\6WR9167il#Lcj\"*$G/?!g+RYV+l!:FRhW5/P?\"?GUuj&oNYi4('gt-`]*&I^5EKJptCCQGL?*T'\\M]^Ou4:Yl:6&q#_.(n$?+i@pD6Ql^MS!MISb-Nm?FYhK;UNK/oL]bsMoeg_o15IJ*U-_]%D.,=OE`p$T`DnAh0q:[?'YIsX61[=@)Qntgc0lfli94i\\T,2gNkh*_kTgZMa3GK?ZA0SRfV.`)`=Zg-R9JeRDH[Sq:\\SP*01pepHOe/2)tR+u9G\\dUGPpLVI<_Sk4iX1naPI6c,\\M//MZ4g!2X[`!;T=ge7t*4e&j&+.4)*:0k6KbJ-#dhbK`[C[]'h,OVb`.^;=^+5C1UVXW7Rgmp1T)d4=$X\\\"ba6<:*Aq#R%a`P1k<j\\./(gkmlM+Je*;5F:S=Si32)=>*[3L;R:g*cPdD5bM&&cLSP&D6$gUT9]D/>JP;,P-!tI>X7NoPKq_&2#CHVWa+pZY^m,FTO4_AqDc2h\\K)<;e`u9j(o#Q=@CYX=XX=P99f)=>:!G%cBsb/EA5Rj92nSo'03>'X_[uaAnsm>5O.#Api?;:KUF(1/fjUKb.hOn\"Q:=RH]s;3\\hq[<u>P\"-/Ruh-?GS!Vb=<O^=+seYtr\"^PSEkNd'[]i+56U99);SEm/4%aI[nTmjbgM']#6gus?NQ7@n<e*dQ^1n2cRH,)$B\"0ZiRgD4KNBph/0;PCK,`L*%:IZX^j\\YGG0]rGCN(NcHk!5CjHUJ7$5Bg@Qbq'+68,=0h>=dQJ[a0_sr[<nLcZ%Z#UI^,ZaOu,hfr'SrLiRe'cg#=((&>]OZG>t@J@=5],Vfrq<\\BjH=LYqG?4bfH9KHZ1Z\"'q=8o0k%_D$\"=Tt9kiT5]e^qbCt:>bf\\C1<^7YJutT*0M.=o,N(RupaM9a_T9SRPG'5m+\\l.ba#i7X]L'tZA2L,]7,jkSjpOi)b?Q%pZEp8lp7!Hg'dERT_JJ':8con%^QeS_F*onUT0U5g/**\"a:Q>1p#'ba[7JLMei4eXNP9k!2Tb>in0Z7\\s`TXsZ8m'@s+rBt\"kGg?RF9kS(e&q#d^Hm^@&q$9,/q':gP]d@c!&8j6N1t#(lH(\\Y>`g&\\?&.&kMoUHZSS;*k18O+Tqq_Qg*iZ;1.o^=.\"+X%QaTGfR]n<ke@H9+:Ei+$t36)BBE[3c(,))?\"%m%l$1cLX?@/AmF>X#e?g'<Ac$u:QN%8\"*+:jh28,u^&&+f#62![_TPO>'*4QW%nhGR&'rCsIIUKle#,@8r@69-kTEDOD?)mYbXu6+SSH;l2e$hgHd`:LrC<>N,ug$2OeLEj:!daQ.#!b?nINn=tSjEtX6\"!8'-Y\\_9HZ\"6iCpGf$+YaM\\Q;&qNm^d?dHA*Eu$HLpIj+(Ac'af,&NmEJNi`Q\":$p[ZX5'J#t+,OT)riR<YtmEOMrQoo+!BUtBCKJ#8C]('iG\"q$qp$hQpqXHHiW;28Cg8RraJajV3!6n*q`<?>=?tXP<;pKF?\\lYZBf7W^f,C0VXPoYAVBZ3c3JQpY:R?U1@*&:!-5id8J\\>Z,\\7R-JrQ<@-fR>'Rpe7TaPNWclQDV\\Vk^Z5.1&NbaY5'EWbm(I+W3U%<S&dE5#^ZlKnn_:`:#SQOj]`T'BH1h7\"RuZSABl5l-e$?8>m3fl!_`c9F.A`nX@igqBM[:$>&G8ICe,1;kQH$hRfI^tou9Vrr'c6'9JRk'?^\\U6_ja3RmQcl[uH`G($lDbr\\tM6\\<G,.f4e19RM8>fR%H!@n<YJ?fTct3MUmoQTZQ?3a>.LB?&uDg9976f)U%g8k4;(U.iF@$,c8!b\\;:%>\",K`ARK-]!DJ@Ma4'S<Jm*Yb,m4b3'Bo`a#Dt:'BnTaX@t_V-S2d$c>OgXN#n8KQ=^LVp_=.I\".+4dEGVQ1gN\\rB`7.6681R4lPehmqW?d5;4@PK%]\"i:g@`964JbM<(4\\(`,&p3(VrF>C@?-45\\eC7@u&>(%%;&Y^jLm^>n5<JfbhGd7*>1$<'AUT[fD5X-;-e57@o*,<Qs]jUY#Xa\"s\"r2.o\"QF@YYXn`\\!$%fS+&d8Uh9@>9r%4oM-.s@2]*A1Ft)M?:jEp\\$UVFWX@i(/)Nb-H)p)&+E7E$W]^Sp(HTU\\KG(4\\03+>>83fbt60!;,f;aXblLB])B$,DXcG9B5B5cSqQAsf?bp\\>o@DsYh\"5?Z::NO]GpOrQn?@(U?VAugsFm\\OFT=$#G;I$>(sIbB07hAj1;,ZC?G\"7r*!Ij1b6'&$J0Vk'WE,V+Hcp)@ZOgLE(=0:c8stHI.t)t4\\c:7.d[t1f,`[_(/stkVmeI(-)]sm9(NK=KhUdHA_$bGTJ#Pnn9.RVL\\%*q+KVqZ-b40.8W!;5'A%#0Wlh?o+<[WOl:e@a=%jX@]W:(]+<uWRC-T*F?Mt*nQnC8~>endstream\nendobj\n19 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2412\n>>\nstream\nGatU5?$\"a[&q&$/Qq-&!U57<SmC[#DQb(sa;n5<LXkL?&LkJ0$8:V)0G._r^rd\"QnfqrRhY#H$:\"A/5Z:JYI?d/neAs)1dHrNrC[mj!^!g?pCnbu_:N8H7>VqX[^.jao-jc8X#Bpblk.&RB;:ldb)#`US=sING'/[\\0sF>#k4R\"8sU-2tYdl6oq7<JV6e_CLo&Hr`WGR$NB\\(W!*'[5)Y&he_b';?eYLM?h82PTRG.$237;*R.-.3-B>A\"Ye@!Q&oHe1mEq*+q<!*a*A;]u$ie6gkj3M'^J!nLqNin?B#PXA.o_8:8k8H-9^55JAP//U__!13.#jP(EcZP.@UWu9^k/%pVoWqCLe8OZWkd/#4JNT+?cu]b@Ra@09mt+*\\nWC[EB(*bJ\"sSQ\\baM,4MQMu49E^Ldj+?R<n6RCIfDPW6?<F8<@Sl);/=]ig<&VL9&66/i\\YQtpDWOs8:?5:omVrZ%Za#(*=;Y2oVh4B\\<M/TCa!mEVdNl%T8rl.XK4`lG`Q'/85iT\"<8_>sISggqq)fFu!codOs1hf0RCPUY-+R5]ab$U9TL\\94R!YM_[Y%o[V6CacYAr\"od$orO,G:B!@fDgP>jO_ZdB()U;dYD>Z>cq9You(Maj+u(`XPcH>_X!(,c)/\"gd=ZDIP#;C&t$oup-&rJ]r:O[[O.?,q(eDN12l/9UB7JrR5:+f\"ji>@#H4p/=papDR7gAY8@b\"\"SOa8mHHME(pLXB+N3*mDK=is#a_Q[6No7N)f(-h*\"c.ujl+K.-[LjS%(5c!k9&tZ*U.cT5Jagn)olQQ5P\"Rg`VNX8h$`+It`2fg#'We@F`B&HrZ0>cG_Rrs^kOUQ$jj!ZK719+=D29EY[[I<)Y,lRWZ,#KRoT6jf3Rm[26CmfdDH)nsHK7VJYpi4PD@=`5B/>l=4FF4a[7t15SHBb$q550rL&Vag*COd3:t?H'FR!QAHiRCR-<B.@i;Ql@X38rDau)Hkh245.Bi!iubY?38hk2I\"[e1-*Fn^p%H_W7ngk^%Zce\"Z8Q0G($pf0l=Qo<dF2q_@>.1/'T[Uu@-&CVBLrRYu&cKR^8[GV`P%\"]JA7#!D:>s3npn22jepSFQ#I</n5Kl,E-2&K?:7`V5*_4a1@)>XbVedMlu/\\2W&8Ec0E84`mHE`FM5G7(eB\"c`0;!KS9pi(/\"!^<-o_'T'aHkBagZTSF0S&SgcHnQ$VT=!q/>UE\"\\[`NFBj#Hd>'@t'OQhbApKl=0^DR.MSDeVVL@</.Xs#SZE*(u(5N#Q.UHJG_r3*],^68JdBgZ,-Thek[I-C9opgloiU?\"apGu-e8\\=*Z3^:+om2F)J0X41oQ7c+V)?n9AKb]$EhqD9)Q2EqBU!>3[Zi6aFHf[@\"eS<DFo$54([UFl/MQH;]8@7DnE8A['upr4:flYikl6tVkQ$WNI;F9VLrJ!:I)>#4N=]67E1T=/AaP>0/'kS)qCPiq>nlJTaB\"JJ\\9IVLS8tI(?\"Ofjin!8En1tp[ogs4#Ku_f.J]o(7$hVVAmoY1]4V9g=Fb9d0'km<Ae9\"H\"Iq]M5L0ckH[@u+ICX`V)dMFec)4;q0^7k+CAu5\"FmX^?Z\"CjabZIu\"`[^LSGPWV[_*3WtpeE2aR>mui?##/\"Ec>;HT*XVQ.DiDr]O4S+KEo..!=Ai/c]_&'5O0ZjmJa^b=sKd\\M2+gN'XM\"XeAP_MOoiVkflE:u4qut9\"D>KeP[f#e&YI;:If^10_1%Dh?d;!jNor4eq7F:^hZ\":a/<MK[+h>H3_a.dm&37fa7)A4%1kK,e!f[O[\"c(>tj*&(<SrCh<\\DD?p3Gt0%/3]DLBkSR3FYT7C0m]WNnK-WHgC$]>LKPOn-B=3tHo`\"e-f+k7&!$/NGAme,e``*DZODXo+VLGhP[:9*Q3kO,lVjaY$j2`bm+TT-o+FR6pbl\\/`]O)\"pMl2dE?%W(_t$,`_D)Rb/`?-QDjl-iF,\".c4kgTmQo!$&;nQD(\\KjQ49`Q/=Skd8F?-UDJ1U<>X'N$$f\"+[D-B0H=6\"d\\/$Cn#rs!r37W':kc@^lPSP5IJWsK&`1u'3lCZPE:A`aMWrlR?q7M3ed%r*sNmM:d8o4-CTB=`&D5(E[C][6+9%$RWob,kC+g?3oo9\\<MOtr3],<Xgt],hCX$p3_+p9jrJPHd:g(\\\"IkSQQq(fm&$F&XV-\\\\IHkt#UMCq5))bTZ!tTJOI)!MUP-q#`jA+1YI8:j\\;JMJ#36+I#>ZI18DNN#+(+&Tj1;I<:K.f\"a@7'AE2_('P=1Ajb;4+UYOPD8X'?Sk'qA)3,C%TdPh1N[PqL:5DEEmYg`_ZbCn)$2/6=0.pBgTsnISec5=HZGNA.[#2[R\"I5Omjs`GbIBBU@]p4@q;EKo3pH6\"t_uWo$Jb(u4'SM'ZTZ'ZIZ/t<o6VDbk%XRetXVog=~>endstream\nendobj\n20 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2584\n>>\nstream\nGau0E?$\"c3&Ui!/fLNE9AQ)sEgF(%%D`u4tVRCA(e%%+c#t_'eJcS.4Wm`'IZN*Qo%b7f5F?Gbl8W^mD4aZlR'%&\"S,6)SO&Udp4`C!&@KU+-GB&aa\\^X/n?LMn9744el?B\"Y(Fj(_Q,,.^p9kHgXnRS:_ZX/kHAQ5Q7lOt0%`O7_aKZCnBja3n.VY=[d]4ZdNUpLe-7aS<5ki<9+K^5B=oq<r\"m:Kmah5P%rmT`35Q2P/k*'>c]JMoc,!%blm[/C@qn^E-*pRhlSKm!-Yl^[sa&9kW,$9.I84qN!>7C;h'=b.#OW4Hm;h.9W'CD(NXeG:G7gC\"\"(;7OMauaiUWG7_$mf&T,Za--GUE\\.+P0k!9>ccG,Vg`>qPNDbS?6,eLC-\\41_/Q.AeVSW\"SGQX$!gT12Wi\"NAfu;T5j(DL<\"WmZ:+\\L54j@`#H[\"^t(U,;I*uX4?Eu$EttWgfrSKq5'ZeeAA3<gL?_h4-p8BXF@2Z\")kr8;.\\5$YSITtbD(a8-<He-F;JFp#:H**7hNO_*JMI-$NYo%B8YfD9Me&PCEgeP:$K]`l/<e7%A=<FY/+&RDE90[2;Ji6VH,,PSj'3EV;pLOVM\\PJn)/i'uWnch.IRHqBdQ3L*IWZt@QP@35&%'MiddUa[n(?-@mVX90=%etP;Do_aDtt9f``3MB!08+4UOi:d<uQ+`.ZN1R_t$[H?k4ZDlcEN_#H[=pU9d0OXP2(0oVUDug]l@h3__0CWYDEDc:O4Tr2Bh\"eOnfj7^<\"8&r=of50+MgiQ.I.l[\\YlbZU3V@pC+gnnfUms4;HV-%mWoY>\"e/H?qp,Gn.78Q&3p+V@88[b#$`hkuV\"I:l89Tm@c#rVGs-tU?i0,<%9=3AdrA2MDOOo\";]m2XE;_1pj$+FH)!0>_HLKuL`X(h2^`^5:VWT^dk9F:X*,.&q-,Br-mt+>Q--AfL5-<CoZ]aoc@eJ(W`IGV@R<HO$=5<nPplK!%lBTEmfWH5\\45=%>63D]9A<Tq[@a*c_]sFS1nmsaSYr,u*q(RZJtaKqYt,&r8kV2He?UJZkRDetbe5Q*^$@,5o>P[R\"H5;l/N2:5Oc>CMKhh;e`s&q@!\\>5Z<m//K`X`s2OeZd??0o;Vbn2WRh>b?g]s%Y,aYL(BMaMda;4IBo;4I\"NdFCDf28FE0^DbEY*Z#>cMD\"^Kp;jt#?]Ea``imVENQ=uWF:\\)A)VrU6h!FqBeX.=e.DTlbeEXF5U;S16N&>S:8OHYsYQDuUj0:P#i)o@Xj3k]<eU]WqDYgc/g%B`;I6U;*e>dp:iIO.J%^>aV\\;@)^:TIfUEjZ$-!'rU)^)j5QLJc6IPLp4rMGW/1F0J]>9_[*)1h\\''\\;q)fc&]9+s+=rj)Gb3retk[\\LNpd\"SYe[h/j>3DWu0p-R?>>!%GJ]]O#6&@\\*LGaC]BQU>1O5FH-fb;\\5iO)F9P-j5L=hZg8a<4]rg]gOm-\\l;t`L@mZGUkPc36\\,Sqs)C>`mIm]mY\"nl2StN1$%Z;$@^#)irbZ`8r]ufl(,u29Mho\"4)1]LtO+VYl7%\"TC2Qi8E5kkS$nEl9Eo5*0R8)Ye(5A;iCB<&[cDmu6J*J#4n)7NLYL'3O7(B`i.=$7n;ES(ZcZTHFKQ$mUu6O^\\V-Pk(!jlRCYHEn'7g'Lld&Jgk*Wji,>cm(F!\"lp=p&(9qkM@-#&N^[E&!l[?Qc^_K$YQ)<n*VopT\"nJeOmf<>7K=]>-VB=3CXmDR+JVCMCX#]`CF20[-QuC=?lX:Q3Zg][&eVi&NnkeMR>>ja1tXKjYBVbDa#l(YJ)=#`U'W(>bihbTp,3k\\u3p^h<&V4g&E$QHNuIC_kN;uiO]5iLg=f3DJ;_)OOhRpH[fbu;:mj@,iDMN29)KrF.LB9R@N'&+J-UYVL!FEq9>5JH$db!fT/A^m$Qlr\\)lLI:J?4bo!8r']YuRO3bKgu',:-bL=VXT<7\\\\M%%V#XqZgJN)*#ap.nmL]/+iW\\_8hX/,5pa///jg$muhMGZ:)lH`^V0S^!f&+2Bh`<o^VGpR$9'^m1\\-)['nL5A9REkc`;#-HLF3Z2kOeR/Up7?aBSZOT1gU3FjPrI(FKV0f44Y+eLtTa]Nor'S$R1Z+pPHMgS.5_*E)sIei[\"4]T)`H\"jW?[inT'%_GQLf[/=cs#bOq4cfW,,Pnd+*JoWPtp@574QuL3mL47,%Gs=M7c&_,.8]U\\:Zu3jbN`J+SZ&OeE&3cZo-*Vsq)a9:tCr5McRE+s8UPic<^HuA%@3m@>35>M3\\,/^N$<:m%>=p\"8e)?kDC]@=W?ap28G[P->BNqI6\"e#38+VVhDTF>4jf]qhAoG]!LBJFbtBZYumUK&=MBdGEGnoW7.r%1)g[N,4laE23;e^kY4DeT.iWZ-FAE&f$&*'*t);\\=A1meZB!!=V62I1/85Xo55#fO3=8caq>+b1i/')[[]8E0EH10]tq,of9r!]Y@1XJP6<E^\\boLb2li5,`I_Pcj5kf2L0,>Ps9=9isu8h@QpX2<lO(epu?CM$M0=sRSOOO@;T0#`u<8>-fhKur5@DiUrNN)_,cP=jAiKOl2bomAoGH1[.Yn0q^m6k%jNW4h#~>endstream\nendobj\n21 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 657\n>>\nstream\nGat=g9lJc?%#46H'g-(qi'ram,Wi/7J7:[;X*`SiOdK7?/U<SNTYl6V.-4qhQ=<-gfT7Q@jnk.(J2'84I8p[EZ%B$1!0KXV##Sn7<;5m])Z1ElG%P`(Ss>'j8&[b\\bff@aR*Qo$ZZ8)A;lEk:5$8QWmLHtnGmR,a$GABA\"4Cq/%$'?D0bDJcY&7g4n-bP&K2B:7l5N^kA\"!W\\E6M5p=jHk(9P6dpjuN=qgCks#8X>Nt8T]6caP$&.qAuPi2DDdf;T#X,J]t,)`n:kO>9l>$*PuH:p)jZ-+4$VbWQ9>qXgHD^SOPgFdrsf\\d69'<k,4/a$'8!X.W3`gpl=7u\"k.aso(pU19;Js?p87<fc^3jM&R)N7]uS.[O??VR4%J0OOBeuK)M.(k`\"oj7;N4q\\#SXH03)%ZFrCI)0=\\L3R9Ah.\\=5ZLB?b1sXRfJ^hOBs7\")Pd\"B^34q\"@>1@Z]/#\\gG:(i;B0Gu&D1Ggd3d/P*#dk)?T<OWYkm9Lda+44_p7=#!?oG:]NfKJoO0gcL\"(MEGp\"cH5(lPj>iPo$No`\"d,hYbQ_7[(k,,^:US\\SCW`?:h.T!EEOaI<!\\#lsX+9I`k>./n&-OhNRehY5c'oBf]Ef;)mgTR#aF:nQ79l:pmYL]]9uqo@'Kt$t/QDT70hX~>endstream\nendobj\n22 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 821\n>>\nstream\nGat=h6#W5X&;BTK'm\"J$'b%od2lFYj>+.EF@[ofNb6BkL)q^jr92\\F]nXZL9FWsd^A-jC`o=fMAG!$VjcYK[t$#lDbHg61F6ZN]Dhuo.3_b\"n<j.NMJD.2R[m;mU=[@cr#Ted!e;t,2_N$9p,UkI-!$3P8V\\%Ws$V8AI4/S#>bB!=%hm/>'Tc:WGm@\"uKN\\7@UTkRAfp+aIj7XpAF5'*O=khtJ:_H;<]$`(ed%;cWWWd23?FK6um9GM\"b%@#rkTEUq=q[>sE_E.)a?YMu`%0/U:@_sq*aQXW_=ZB[Ih6t]8i\\jM+tWl!J;BJcfWD1)PlXD.hdQ5*\"Ebn9GC(_*@F$Efp@9S#-ikno=2Uio`8Ijj[A#>ugL@=e6_K4ONB'3QP+:JDK<l_/4eA'oXSN=Q8H?&8'Sef@jc-7PeFc%IuIgsq.\\Z@OXE0`B?'/\"?g]P>kUg4UR1K\"7>.s:E,m[`-juF^f<%^E&*gE)r_au7+D;p05>@6U+rCbKOdQFCaODQ7\"LCud</H_14:!lE%p<4VQAFtFE\"B2?j2<=2p3Gep`hGr.d9(,jJC+-+$)V)9Xf7A;YCX@AR--=-PB%;DM7*I#V(O2SQ\\rt9b\"Bi;$aMq6T^kLVS2,Vr!pF[Y-p/gD1JI+K7H6YCSf*BaCr9]^m[r0K<aQ4CJ'n%?(5BNi.@qu^UJB+cua*g/GC<GL+iQQarD5<*F.2?h7,Jc>d8#gCde.=2&X.&k9r4`@E7r,BhD:[6\"VY:^pb6=J]*LJ9)DAfHfpI,kglAZYQ*IF+PX69[2PWifmr&r>C'tpKi1bE2T)`qL4eC>9dmg~>endstream\nendobj\nxref\n0 23\n0000000000 65535 f \n0000000061 00000 n \n0000000122 00000 n \n0000000229 00000 n \n0000000341 00000 n \n0000000460 00000 n \n0000000537 00000 n \n0000000742 00000 n \n0000000947 00000 n \n0000001152 00000 n \n0000001357 00000 n \n0000001563 00000 n \n0000001769 00000 n \n0000001975 00000 n \n0000002045 00000 n \n0000002326 00000 n \n0000002425 00000 n \n0000005132 00000 n \n0000005900 00000 n \n0000008513 00000 n \n0000011017 00000 n \n0000013693 00000 n \n0000014441 00000 n \ntrailer\n<<\n/ID \n[<4239fae42a377fe51f7be6d586d76f30><4239fae42a377fe51f7be6d586d76f30>]\n% ReportLab generated PDF document -- digest (opensource)",
+          "relevance": 0.4867
+        },
+        {
+          "chunk_id": "CHK_c8f92451",
+          "document": "dummy.pdf",
+          "page": 1,
+          "section": null,
+          "text": "t /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<\n\n>> \n  /Type /Page\n>>\nendobj\n9 0 obj\n<<\n/Contents 19 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 15 0 R /Resources <<\n/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<",
+          "relevance": 0.4821
+        },
+        {
+          "chunk_id": "CHK_7eb88b16",
+          "document": "dummy.pdf",
+          "page": 1,
+          "section": null,
+          "text": "t /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<\n\n>> \n  /Type /Page\n>>\nendobj\n8 0 obj\n<<\n/Contents 18 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 15 0 R /Resources <<\n/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<",
+          "relevance": 0.4802
+        }
+      ],
+      "error": null,
+      "success": true,
+      "latency_ms": 23.01,
+      "called_at": "2026-09-04 07:58:46.908652"
+    },
+    {
+      "call_id": "CALL_9824f97c",
+      "tool_name": "artifact.generate_docx",
+      "arguments": {
+        "subject": "Approval for Overhaul and Seal Replacement - Pump P-101",
+        "equipment_id": "P-101",
+        "sop_reference": "MRPL SOP Section 4.2",
+        "findings": [
+          "Drive-end bearing vibration (4.8 mm/s) exceeds API 610 threshold (4.5 mm/s).",
+          "Mechanical seal primary face minor weeping detected.",
+          "SOP Section 4.2 compliance requires priority work order."
+        ]
+      },
+      "output": {
+        "artifact_id": "ART_74abb4fc",
+        "task_id": "TASK_4d36412c",
+        "filename": "MRPL_Approval_Note_P_101_20260904_075847.docx",
+        "type": "docx",
+        "created_at": "2026-09-04T07:58:47.196450",
+        "source_documents": [
+          "inspection_report.pdf",
+          "MRPL_SOP_P101.pdf"
+        ],
+        "models_used": [
+          "qwen2.5vl:7b",
+          "qwen3:8b"
+        ],
+        "verification_status": "verified",
+        "verified": true,
+        "sha256_hash": "eb982a076478c92432e4e59a2a90e767e9464020ef8c4b9ee80656ddd9170bcf",
+        "size_bytes": 38002,
+        "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260904_075847.docx",
+        "download_url": "/api/v1/artifacts/ART_74abb4fc/download",
+        "metadata": {
+          "equipment_tag": "P-101",
+          "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+        }
+      },
+      "error": null,
+      "success": true,
+      "latency_ms": 267.56,
+      "called_at": "2026-09-04 07:58:47.210443"
+    }
+  ],
+  "retrieved_context": [
+    {
+      "chunk_id": "CHK_cc734027",
+      "document": "dummy.pdf",
+      "page": 1,
+      "section": null,
+      "text": "t /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<\n\n>> \n  /Type /Page\n>>\nendobj\n13 0 obj\n<<\n/PageMode /UseNone /Pages 15 0 R /Type /Catalog\n>>\nendobj\n14 0 obj\n<<\n/Author (\\(anonymous\\)) /CreationDate (D:20260810090300+00'00') /Creator (\\(unspecified\\)) /Keywords () /ModDate (D:20260810090300+00'00') /Producer (ReportLab PDF Library - \\(opensource\\)) \n  /Subject (\\(unspecified\\)) /Title (\\(anonymous\\)) /Trapped /False\n>>\nendobj\n15 0 obj\n<<\n/Count 7 /Kids [ 6 0 R 7 0 R 8 0 R 9 0 R 10 0 R 11 0 R 12 0 R ] /Type /Pages\n>>\nendobj\n16 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2615\n>>\nstream\nGauHLgMYb:&q/)-e>$Y\"dirr-^+$<#GUIYI9A'IaH\"iHoW[B']gJ,hc?pB+@MTq&)b9f'],(N%CIAtESF/mrL+o_*/DjUU=?bt8_+8c+>C[fC$(fm9fG4k8fn(a6iICT!JmQJ;Wh%K_[e=2E#k7@dQF>i`'YY*m6H_q.[]7V1k0SQ]\"LXK@k`?;GlQA%6h]I]!U.6ZLC6GS*0X,&(s^VT1G=T+5fq1]+'qi&R%JEmFoRn^P0&>7kSFi[oagpLf$A$Y(Y@fS^INJ#XFM)Q@!LU1do^5C:SLV$Q%iT$78\\'*mh_^APKgq[t'jcQ.$X2iu64[%UP<f>\\9bPd^YcBg+'^M2r2Z#mpXk5\\ilQhSApjC%f$lM:-LOhr<KcdLIZ#edmWn$bCID<ObYc4KC;R<QC=GjF'I\\=frV0h!iJA-A;QV#<An8O.6i049p#E$IB2kl@$[/djakpH##J<]\\ihNg7Oq*W]\\Ig&c+5^q[;V?-6E@!Bd=QWMC[`rnK!(nU'ZY`IhKGq[=6Q'.bOIU!BaV<O)Za_JToFhV4`kc=c;diToKC\"cE^0!Sf=LItqt\"DjRN:0+Z5IgJ7[U[e4:iUtU*IBr5N(Hb?iV@BN&)q^%rO+H'n`Z3%pO6*DHK(`;pF;KaU`+irCOVROu=LbUY/;87'@kF9V_kU+0bo$W7:_<(8N;5#BP`j\\`3LXW_;$a)\"EFV%IPmc*A/j!1s3&UI#D5ATjHd38XSCAa<^8YL13[PL%p37rkqJmMJ62_*Zl!/cc`A\\?..U'9$N1&XaT*\"sI0`KNnnZ\"%=H\"g/>h:8AJ)-jT7#Mb%8P#1>i4;FO>CmFYSeXY('3GO)6(1m5-jJ7^(40d@D_\"1po?V`fVpR?-6Ymn\"?\"*o*^e)I:Gl-&N%'lS8hseJJKI3i=dQO\\ce(%Sed)e\"1/>d,)V-j1lp\"T8M9gA*u',P\\Q-=6mNa_@Os</>sZgd&L7Vh2lg*RJfHgXasGSHY*rUj#M(@jcGK2_!)\\j227h#P\"LJ1Aa%\")HZO'!C58U``nXdg3R1'Jh@a,C%\\,d0hn.;7B\">(5R69LVH)j,'sa2Q<_duWB/P&$<p#g)\"$Ve@esQ6WY0oQ-XhN/$M*C?2W8WN8FMb19-5n]W\\1\\l;ICY#S_q.UoqB,*aDS5ej,R@+%G`hoJ3r\"51SCnbc*i4j?7;aA^+31>G\\I)OUXWMZVpUCVAGo4(+fJ$tFc.nAh[lnsH8\\bT+TF#3+#=O`lEVfoeBLGq^D.1)b6om3lLa?aF6PG-e_JBdLedOb$,]-meHu#t:Ig:IjT#AaI5<9akbE82QKI;[9N7>pX8M4KDr/bf$d6M\"a$Z]9H9ek&dQ6O7f9WAU&M..>rVD_3C@_$$Wb5%VpNKJ,Jo0%7G%UMGJCl>4`22N\\5-ZU@ZA0j=*CqMYp*ji-h'dM9opO>PUpSIIZf,!OQF0CK!'qf9*\".+AZL/#4RN<iV9?^2/)'Z:B`En?D!:8M$GOU6757D=Mu0a`%)gm1kFf)7O2JZVmiVT1f7^A\\o(_%PBs_mRa$0$P(,#UX3+U(*i\\-iC:Km=E]m6K*$8SS7kg>Pc?#U-=ZC%<M9,^<hNtN52S*'m2>WH^@A9_t?uHMYRS#,b.7Cc/e8<qAWKKT7dt&1kNWOFDQVj!A;MNmn/;ecBK_@^KpodZ^;`qut5#fHCRF0EMN8>[>O'<C^N$pG=?99Migk[5<=^9K[*G/uqgiYtaq:Ol/Nnut\"V[;k1Z1Y*;?.nmLmMlNnUUV44b:s0P'b\"6!VP/ItEVJBu)k\"6&_GF/E+m38dND*3-U:*nM7%U-PY_h>Kk#th*B;gP#BC/?(5nuHsj7p=sfhrPHFmh$G@E@[H2]5Ed/dqQaPX1@rng%UT=?gXk;V's>/QGYPK-'H)]e7V^+rdmH+o@,^01eurhQ)`;SQ$[n\"QSG<d`EBiN1qRuf&Jc>P+b.S,F<RrYR`cpG3MPXl<Bs),6(WL&j)=%9G4Gd+\">AB0UaU)9:$Y70j%G3Y[WG\"_HL3aLfP2\"`SIkOQH&45[5I^2<pH1Km0'3$%3c>'UF'II(=B?uo2o`[`\"eO?Zr3N0#CiGqSn%LAXbsGp3@$_/6k>KR>S\\g.I)sN0_*KfW.@5B\\N(YWS-*^<E&&\\AAr-Wcp['43oV&*Z_aVK:kMdXYMgU#D8EqsP!m+b@-X+Q>='tiOQ)e@2L(F,_94hY#E''&RmhqF@HVAj^#G@]';/)=JDnW'XiCN+fs9e>crD>5:W9?fY\"i_SIE#<E=^C[MV@NKOablN.n<Uo\"^;RCRDu1WA3>f,@;7N(=o6,8UTZWau!jTc]f9-ET;t'pO3WP+2-1?M9rJ53<.Bop'/gcZee@3ALC?gj[Q;?^g%HYtL63019@e@>K)L\\^fqZCXrkNQVOY^2U*Cm`$b28)Utd:Ht%I;G\\fs_EVL;>cp;SnYF=E6_681[iT/cEdNR!_#.h@&82]Zu_`W&[KY`,:OA+l^S&g8O0QWYV[YX3b'Iq$d-DKGpP(N0.cGj1cnVa5I-8OAgms4;\\V2'8uFIoCMV<kJPmWlb3O+eAd$F&&PR9#Y*Fj4k,86rKABro.i(F3+P-Ck6@6cr\\lU_lY&>V!&F+h<;o]4Q,e*/5'^r=A4tbT6~>endstream\nendobj\n17 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 677\n>>\nstream\nGatUo;/ao;&BE]*.IOG`k1+@=[#`!\\BbEshAT,4d'.5M-m9i#HMYQ\\r\\`mc2&ecZkj8+/;hu3Qk#r?m<qCT/Vmg?S;OWYAQ29:JR5k+lXMoiHM(g1id/[BAgG3*t&>\\@NV=Kat=Ola-tU\"I6S_3tY=\\*uhc%.:bYFU5uFJ@:(,kWH';UY!$;eJ1Q,+)m!p#5&=\\Y>Dmo17nj1=D+lMMXFQ-YN@$-MRY)r92XT:'$Xf:Q:u:D1C#r#2)iM<;^hm_mJCc3V6e!kW,72'6d$=oJa9)aRdV.E7]P[&2k(s/B*#K%c3/`39^=/K`#7m5Bp\\C/Zn`<j!EYH&o0bZ9ZlcQ.NJm1LeKeV`Hdqomc4W(5-@g4RE/eGP0ed^8FDn7`\\@L7,^qTQGpBK[:2ScV?^)G`b0cXDdp+@2\"S-5ljgj/C8lZUCj0tFH0)4?$i7Hd:S8@:Q`Jou2;Hp_&e:i[=':)&,5H><C#?7Q%XHD`jV'AHANW_^;eH`3p9rd6Jnd-K6ll$nK&d2/Lp0'/%Ub-Jd44'UnJmeT;tn<oP6Lc'q.-4qRd<\"@dVbS!`r6*mS*'o\"=^VW'bl9lH(AosBEciQ7Zg$:.\\gcBNPjDd31G*dp`=F3>k5enJd<DnZT<VDE4alJW5to*1PWY::GPOG5-W4ZWPp3NR],?=<=;\\E-bP~>endstream\nendobj\n18 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2521\n>>\nstream\nGatU5gQ(#H&:Ml+bi?-N*)\"$4DLjufRU'=K>FK\\AMS.:KD6]3oQ))'4d#[W(8R:](=]IqA^_4W0ba^\\7L)[r;s$cAUU]>YOL,TVT6ntdP&1sae=T8HslW=,!$6qJdE'%?Zp\\6WR9167il#Lcj\"*$G/?!g+RYV+l!:FRhW5/P?\"?GUuj&oNYi4('gt-`]*&I^5EKJptCCQGL?*T'\\M]^Ou4:Yl:6&q#_.(n$?+i@pD6Ql^MS!MISb-Nm?FYhK;UNK/oL]bsMoeg_o15IJ*U-_]%D.,=OE`p$T`DnAh0q:[?'YIsX61[=@)Qntgc0lfli94i\\T,2gNkh*_kTgZMa3GK?ZA0SRfV.`)`=Zg-R9JeRDH[Sq:\\SP*01pepHOe/2)tR+u9G\\dUGPpLVI<_Sk4iX1naPI6c,\\M//MZ4g!2X[`!;T=ge7t*4e&j&+.4)*:0k6KbJ-#dhbK`[C[]'h,OVb`.^;=^+5C1UVXW7Rgmp1T)d4=$X\\\"ba6<:*Aq#R%a`P1k<j\\./(gkmlM+Je*;5F:S=Si32)=>*[3L;R:g*cPdD5bM&&cLSP&D6$gUT9]D/>JP;,P-!tI>X7NoPKq_&2#CHVWa+pZY^m,FTO4_AqDc2h\\K)<;e`u9j(o#Q=@CYX=XX=P99f)=>:!G%cBsb/EA5Rj92nSo'03>'X_[uaAnsm>5O.#Api?;:KUF(1/fjUKb.hOn\"Q:=RH]s;3\\hq[<u>P\"-/Ruh-?GS!Vb=<O^=+seYtr\"^PSEkNd'[]i+56U99);SEm/4%aI[nTmjbgM']#6gus?NQ7@n<e*dQ^1n2cRH,)$B\"0ZiRgD4KNBph/0;PCK,`L*%:IZX^j\\YGG0]rGCN(NcHk!5CjHUJ7$5Bg@Qbq'+68,=0h>=dQJ[a0_sr[<nLcZ%Z#UI^,ZaOu,hfr'SrLiRe'cg#=((&>]OZG>t@J@=5],Vfrq<\\BjH=LYqG?4bfH9KHZ1Z\"'q=8o0k%_D$\"=Tt9kiT5]e^qbCt:>bf\\C1<^7YJutT*0M.=o,N(RupaM9a_T9SRPG'5m+\\l.ba#i7X]L'tZA2L,]7,jkSjpOi)b?Q%pZEp8lp7!Hg'dERT_JJ':8con%^QeS_F*onUT0U5g/**\"a:Q>1p#'ba[7JLMei4eXNP9k!2Tb>in0Z7\\s`TXsZ8m'@s+rBt\"kGg?RF9kS(e&q#d^Hm^@&q$9,/q':gP]d@c!&8j6N1t#(lH(\\Y>`g&\\?&.&kMoUHZSS;*k18O+Tqq_Qg*iZ;1.o^=.\"+X%QaTGfR]n<ke@H9+:Ei+$t36)BBE[3c(,))?\"%m%l$1cLX?@/AmF>X#e?g'<Ac$u:QN%8\"*+:jh28,u^&&+f#62![_TPO>'*4QW%nhGR&'rCsIIUKle#,@8r@69-kTEDOD?)mYbXu6+SSH;l2e$hgHd`:LrC<>N,ug$2OeLEj:!daQ.#!b?nINn=tSjEtX6\"!8'-Y\\_9HZ\"6iCpGf$+YaM\\Q;&qNm^d?dHA*Eu$HLpIj+(Ac'af,&NmEJNi`Q\":$p[ZX5'J#t+,OT)riR<YtmEOMrQoo+!BUtBCKJ#8C]('iG\"q$qp$hQpqXHHiW;28Cg8RraJajV3!6n*q`<?>=?tXP<;pKF?\\lYZBf7W^f,C0VXPoYAVBZ3c3JQpY:R?U1@*&:!-5id8J\\>Z,\\7R-JrQ<@-fR>'Rpe7TaPNWclQDV\\Vk^Z5.1&NbaY5'EWbm(I+W3U%<S&dE5#^ZlKnn_:`:#SQOj]`T'BH1h7\"RuZSABl5l-e$?8>m3fl!_`c9F.A`nX@igqBM[:$>&G8ICe,1;kQH$hRfI^tou9Vrr'c6'9JRk'?^\\U6_ja3RmQcl[uH`G($lDbr\\tM6\\<G,.f4e19RM8>fR%H!@n<YJ?fTct3MUmoQTZQ?3a>.LB?&uDg9976f)U%g8k4;(U.iF@$,c8!b\\;:%>\",K`ARK-]!DJ@Ma4'S<Jm*Yb,m4b3'Bo`a#Dt:'BnTaX@t_V-S2d$c>OgXN#n8KQ=^LVp_=.I\".+4dEGVQ1gN\\rB`7.6681R4lPehmqW?d5;4@PK%]\"i:g@`964JbM<(4\\(`,&p3(VrF>C@?-45\\eC7@u&>(%%;&Y^jLm^>n5<JfbhGd7*>1$<'AUT[fD5X-;-e57@o*,<Qs]jUY#Xa\"s\"r2.o\"QF@YYXn`\\!$%fS+&d8Uh9@>9r%4oM-.s@2]*A1Ft)M?:jEp\\$UVFWX@i(/)Nb-H)p)&+E7E$W]^Sp(HTU\\KG(4\\03+>>83fbt60!;,f;aXblLB])B$,DXcG9B5B5cSqQAsf?bp\\>o@DsYh\"5?Z::NO]GpOrQn?@(U?VAugsFm\\OFT=$#G;I$>(sIbB07hAj1;,ZC?G\"7r*!Ij1b6'&$J0Vk'WE,V+Hcp)@ZOgLE(=0:c8stHI.t)t4\\c:7.d[t1f,`[_(/stkVmeI(-)]sm9(NK=KhUdHA_$bGTJ#Pnn9.RVL\\%*q+KVqZ-b40.8W!;5'A%#0Wlh?o+<[WOl:e@a=%jX@]W:(]+<uWRC-T*F?Mt*nQnC8~>endstream\nendobj\n19 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2412\n>>\nstream\nGatU5?$\"a[&q&$/Qq-&!U57<SmC[#DQb(sa;n5<LXkL?&LkJ0$8:V)0G._r^rd\"QnfqrRhY#H$:\"A/5Z:JYI?d/neAs)1dHrNrC[mj!^!g?pCnbu_:N8H7>VqX[^.jao-jc8X#Bpblk.&RB;:ldb)#`US=sING'/[\\0sF>#k4R\"8sU-2tYdl6oq7<JV6e_CLo&Hr`WGR$NB\\(W!*'[5)Y&he_b';?eYLM?h82PTRG.$237;*R.-.3-B>A\"Ye@!Q&oHe1mEq*+q<!*a*A;]u$ie6gkj3M'^J!nLqNin?B#PXA.o_8:8k8H-9^55JAP//U__!13.#jP(EcZP.@UWu9^k/%pVoWqCLe8OZWkd/#4JNT+?cu]b@Ra@09mt+*\\nWC[EB(*bJ\"sSQ\\baM,4MQMu49E^Ldj+?R<n6RCIfDPW6?<F8<@Sl);/=]ig<&VL9&66/i\\YQtpDWOs8:?5:omVrZ%Za#(*=;Y2oVh4B\\<M/TCa!mEVdNl%T8rl.XK4`lG`Q'/85iT\"<8_>sISggqq)fFu!codOs1hf0RCPUY-+R5]ab$U9TL\\94R!YM_[Y%o[V6CacYAr\"od$orO,G:B!@fDgP>jO_ZdB()U;dYD>Z>cq9You(Maj+u(`XPcH>_X!(,c)/\"gd=ZDIP#;C&t$oup-&rJ]r:O[[O.?,q(eDN12l/9UB7JrR5:+f\"ji>@#H4p/=papDR7gAY8@b\"\"SOa8mHHME(pLXB+N3*mDK=is#a_Q[6No7N)f(-h*\"c.ujl+K.-[LjS%(5c!k9&tZ*U.cT5Jagn)olQQ5P\"Rg`VNX8h$`+It`2fg#'We@F`B&HrZ0>cG_Rrs^kOUQ$jj!ZK719+=D29EY[[I<)Y,lRWZ,#KRoT6jf3Rm[26CmfdDH)nsHK7VJYpi4PD@=`5B/>l=4FF4a[7t15SHBb$q550rL&Vag*COd3:t?H'FR!QAHiRCR-<B.@i;Ql@X38rDau)Hkh245.Bi!iubY?38hk2I\"[e1-*Fn^p%H_W7ngk^%Zce\"Z8Q0G($pf0l=Qo<dF2q_@>.1/'T[Uu@-&CVBLrRYu&cKR^8[GV`P%\"]JA7#!D:>s3npn22jepSFQ#I</n5Kl,E-2&K?:7`V5*_4a1@)>XbVedMlu/\\2W&8Ec0E84`mHE`FM5G7(eB\"c`0;!KS9pi(/\"!^<-o_'T'aHkBagZTSF0S&SgcHnQ$VT=!q/>UE\"\\[`NFBj#Hd>'@t'OQhbApKl=0^DR.MSDeVVL@</.Xs#SZE*(u(5N#Q.UHJG_r3*],^68JdBgZ,-Thek[I-C9opgloiU?\"apGu-e8\\=*Z3^:+om2F)J0X41oQ7c+V)?n9AKb]$EhqD9)Q2EqBU!>3[Zi6aFHf[@\"eS<DFo$54([UFl/MQH;]8@7DnE8A['upr4:flYikl6tVkQ$WNI;F9VLrJ!:I)>#4N=]67E1T=/AaP>0/'kS)qCPiq>nlJTaB\"JJ\\9IVLS8tI(?\"Ofjin!8En1tp[ogs4#Ku_f.J]o(7$hVVAmoY1]4V9g=Fb9d0'km<Ae9\"H\"Iq]M5L0ckH[@u+ICX`V)dMFec)4;q0^7k+CAu5\"FmX^?Z\"CjabZIu\"`[^LSGPWV[_*3WtpeE2aR>mui?##/\"Ec>;HT*XVQ.DiDr]O4S+KEo..!=Ai/c]_&'5O0ZjmJa^b=sKd\\M2+gN'XM\"XeAP_MOoiVkflE:u4qut9\"D>KeP[f#e&YI;:If^10_1%Dh?d;!jNor4eq7F:^hZ\":a/<MK[+h>H3_a.dm&37fa7)A4%1kK,e!f[O[\"c(>tj*&(<SrCh<\\DD?p3Gt0%/3]DLBkSR3FYT7C0m]WNnK-WHgC$]>LKPOn-B=3tHo`\"e-f+k7&!$/NGAme,e``*DZODXo+VLGhP[:9*Q3kO,lVjaY$j2`bm+TT-o+FR6pbl\\/`]O)\"pMl2dE?%W(_t$,`_D)Rb/`?-QDjl-iF,\".c4kgTmQo!$&;nQD(\\KjQ49`Q/=Skd8F?-UDJ1U<>X'N$$f\"+[D-B0H=6\"d\\/$Cn#rs!r37W':kc@^lPSP5IJWsK&`1u'3lCZPE:A`aMWrlR?q7M3ed%r*sNmM:d8o4-CTB=`&D5(E[C][6+9%$RWob,kC+g?3oo9\\<MOtr3],<Xgt],hCX$p3_+p9jrJPHd:g(\\\"IkSQQq(fm&$F&XV-\\\\IHkt#UMCq5))bTZ!tTJOI)!MUP-q#`jA+1YI8:j\\;JMJ#36+I#>ZI18DNN#+(+&Tj1;I<:K.f\"a@7'AE2_('P=1Ajb;4+UYOPD8X'?Sk'qA)3,C%TdPh1N[PqL:5DEEmYg`_ZbCn)$2/6=0.pBgTsnISec5=HZGNA.[#2[R\"I5Omjs`GbIBBU@]p4@q;EKo3pH6\"t_uWo$Jb(u4'SM'ZTZ'ZIZ/t<o6VDbk%XRetXVog=~>endstream\nendobj\n20 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 2584\n>>\nstream\nGau0E?$\"c3&Ui!/fLNE9AQ)sEgF(%%D`u4tVRCA(e%%+c#t_'eJcS.4Wm`'IZN*Qo%b7f5F?Gbl8W^mD4aZlR'%&\"S,6)SO&Udp4`C!&@KU+-GB&aa\\^X/n?LMn9744el?B\"Y(Fj(_Q,,.^p9kHgXnRS:_ZX/kHAQ5Q7lOt0%`O7_aKZCnBja3n.VY=[d]4ZdNUpLe-7aS<5ki<9+K^5B=oq<r\"m:Kmah5P%rmT`35Q2P/k*'>c]JMoc,!%blm[/C@qn^E-*pRhlSKm!-Yl^[sa&9kW,$9.I84qN!>7C;h'=b.#OW4Hm;h.9W'CD(NXeG:G7gC\"\"(;7OMauaiUWG7_$mf&T,Za--GUE\\.+P0k!9>ccG,Vg`>qPNDbS?6,eLC-\\41_/Q.AeVSW\"SGQX$!gT12Wi\"NAfu;T5j(DL<\"WmZ:+\\L54j@`#H[\"^t(U,;I*uX4?Eu$EttWgfrSKq5'ZeeAA3<gL?_h4-p8BXF@2Z\")kr8;.\\5$YSITtbD(a8-<He-F;JFp#:H**7hNO_*JMI-$NYo%B8YfD9Me&PCEgeP:$K]`l/<e7%A=<FY/+&RDE90[2;Ji6VH,,PSj'3EV;pLOVM\\PJn)/i'uWnch.IRHqBdQ3L*IWZt@QP@35&%'MiddUa[n(?-@mVX90=%etP;Do_aDtt9f``3MB!08+4UOi:d<uQ+`.ZN1R_t$[H?k4ZDlcEN_#H[=pU9d0OXP2(0oVUDug]l@h3__0CWYDEDc:O4Tr2Bh\"eOnfj7^<\"8&r=of50+MgiQ.I.l[\\YlbZU3V@pC+gnnfUms4;HV-%mWoY>\"e/H?qp,Gn.78Q&3p+V@88[b#$`hkuV\"I:l89Tm@c#rVGs-tU?i0,<%9=3AdrA2MDOOo\";]m2XE;_1pj$+FH)!0>_HLKuL`X(h2^`^5:VWT^dk9F:X*,.&q-,Br-mt+>Q--AfL5-<CoZ]aoc@eJ(W`IGV@R<HO$=5<nPplK!%lBTEmfWH5\\45=%>63D]9A<Tq[@a*c_]sFS1nmsaSYr,u*q(RZJtaKqYt,&r8kV2He?UJZkRDetbe5Q*^$@,5o>P[R\"H5;l/N2:5Oc>CMKhh;e`s&q@!\\>5Z<m//K`X`s2OeZd??0o;Vbn2WRh>b?g]s%Y,aYL(BMaMda;4IBo;4I\"NdFCDf28FE0^DbEY*Z#>cMD\"^Kp;jt#?]Ea``imVENQ=uWF:\\)A)VrU6h!FqBeX.=e.DTlbeEXF5U;S16N&>S:8OHYsYQDuUj0:P#i)o@Xj3k]<eU]WqDYgc/g%B`;I6U;*e>dp:iIO.J%^>aV\\;@)^:TIfUEjZ$-!'rU)^)j5QLJc6IPLp4rMGW/1F0J]>9_[*)1h\\''\\;q)fc&]9+s+=rj)Gb3retk[\\LNpd\"SYe[h/j>3DWu0p-R?>>!%GJ]]O#6&@\\*LGaC]BQU>1O5FH-fb;\\5iO)F9P-j5L=hZg8a<4]rg]gOm-\\l;t`L@mZGUkPc36\\,Sqs)C>`mIm]mY\"nl2StN1$%Z;$@^#)irbZ`8r]ufl(,u29Mho\"4)1]LtO+VYl7%\"TC2Qi8E5kkS$nEl9Eo5*0R8)Ye(5A;iCB<&[cDmu6J*J#4n)7NLYL'3O7(B`i.=$7n;ES(ZcZTHFKQ$mUu6O^\\V-Pk(!jlRCYHEn'7g'Lld&Jgk*Wji,>cm(F!\"lp=p&(9qkM@-#&N^[E&!l[?Qc^_K$YQ)<n*VopT\"nJeOmf<>7K=]>-VB=3CXmDR+JVCMCX#]`CF20[-QuC=?lX:Q3Zg][&eVi&NnkeMR>>ja1tXKjYBVbDa#l(YJ)=#`U'W(>bihbTp,3k\\u3p^h<&V4g&E$QHNuIC_kN;uiO]5iLg=f3DJ;_)OOhRpH[fbu;:mj@,iDMN29)KrF.LB9R@N'&+J-UYVL!FEq9>5JH$db!fT/A^m$Qlr\\)lLI:J?4bo!8r']YuRO3bKgu',:-bL=VXT<7\\\\M%%V#XqZgJN)*#ap.nmL]/+iW\\_8hX/,5pa///jg$muhMGZ:)lH`^V0S^!f&+2Bh`<o^VGpR$9'^m1\\-)['nL5A9REkc`;#-HLF3Z2kOeR/Up7?aBSZOT1gU3FjPrI(FKV0f44Y+eLtTa]Nor'S$R1Z+pPHMgS.5_*E)sIei[\"4]T)`H\"jW?[inT'%_GQLf[/=cs#bOq4cfW,,Pnd+*JoWPtp@574QuL3mL47,%Gs=M7c&_,.8]U\\:Zu3jbN`J+SZ&OeE&3cZo-*Vsq)a9:tCr5McRE+s8UPic<^HuA%@3m@>35>M3\\,/^N$<:m%>=p\"8e)?kDC]@=W?ap28G[P->BNqI6\"e#38+VVhDTF>4jf]qhAoG]!LBJFbtBZYumUK&=MBdGEGnoW7.r%1)g[N,4laE23;e^kY4DeT.iWZ-FAE&f$&*'*t);\\=A1meZB!!=V62I1/85Xo55#fO3=8caq>+b1i/')[[]8E0EH10]tq,of9r!]Y@1XJP6<E^\\boLb2li5,`I_Pcj5kf2L0,>Ps9=9isu8h@QpX2<lO(epu?CM$M0=sRSOOO@;T0#`u<8>-fhKur5@DiUrNN)_,cP=jAiKOl2bomAoGH1[.Yn0q^m6k%jNW4h#~>endstream\nendobj\n21 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 657\n>>\nstream\nGat=g9lJc?%#46H'g-(qi'ram,Wi/7J7:[;X*`SiOdK7?/U<SNTYl6V.-4qhQ=<-gfT7Q@jnk.(J2'84I8p[EZ%B$1!0KXV##Sn7<;5m])Z1ElG%P`(Ss>'j8&[b\\bff@aR*Qo$ZZ8)A;lEk:5$8QWmLHtnGmR,a$GABA\"4Cq/%$'?D0bDJcY&7g4n-bP&K2B:7l5N^kA\"!W\\E6M5p=jHk(9P6dpjuN=qgCks#8X>Nt8T]6caP$&.qAuPi2DDdf;T#X,J]t,)`n:kO>9l>$*PuH:p)jZ-+4$VbWQ9>qXgHD^SOPgFdrsf\\d69'<k,4/a$'8!X.W3`gpl=7u\"k.aso(pU19;Js?p87<fc^3jM&R)N7]uS.[O??VR4%J0OOBeuK)M.(k`\"oj7;N4q\\#SXH03)%ZFrCI)0=\\L3R9Ah.\\=5ZLB?b1sXRfJ^hOBs7\")Pd\"B^34q\"@>1@Z]/#\\gG:(i;B0Gu&D1Ggd3d/P*#dk)?T<OWYkm9Lda+44_p7=#!?oG:]NfKJoO0gcL\"(MEGp\"cH5(lPj>iPo$No`\"d,hYbQ_7[(k,,^:US\\SCW`?:h.T!EEOaI<!\\#lsX+9I`k>./n&-OhNRehY5c'oBf]Ef;)mgTR#aF:nQ79l:pmYL]]9uqo@'Kt$t/QDT70hX~>endstream\nendobj\n22 0 obj\n<<\n/Filter [ /ASCII85Decode /FlateDecode ] /Length 821\n>>\nstream\nGat=h6#W5X&;BTK'm\"J$'b%od2lFYj>+.EF@[ofNb6BkL)q^jr92\\F]nXZL9FWsd^A-jC`o=fMAG!$VjcYK[t$#lDbHg61F6ZN]Dhuo.3_b\"n<j.NMJD.2R[m;mU=[@cr#Ted!e;t,2_N$9p,UkI-!$3P8V\\%Ws$V8AI4/S#>bB!=%hm/>'Tc:WGm@\"uKN\\7@UTkRAfp+aIj7XpAF5'*O=khtJ:_H;<]$`(ed%;cWWWd23?FK6um9GM\"b%@#rkTEUq=q[>sE_E.)a?YMu`%0/U:@_sq*aQXW_=ZB[Ih6t]8i\\jM+tWl!J;BJcfWD1)PlXD.hdQ5*\"Ebn9GC(_*@F$Efp@9S#-ikno=2Uio`8Ijj[A#>ugL@=e6_K4ONB'3QP+:JDK<l_/4eA'oXSN=Q8H?&8'Sef@jc-7PeFc%IuIgsq.\\Z@OXE0`B?'/\"?g]P>kUg4UR1K\"7>.s:E,m[`-juF^f<%^E&*gE)r_au7+D;p05>@6U+rCbKOdQFCaODQ7\"LCud</H_14:!lE%p<4VQAFtFE\"B2?j2<=2p3Gep`hGr.d9(,jJC+-+$)V)9Xf7A;YCX@AR--=-PB%;DM7*I#V(O2SQ\\rt9b\"Bi;$aMq6T^kLVS2,Vr!pF[Y-p/gD1JI+K7H6YCSf*BaCr9]^m[r0K<aQ4CJ'n%?(5BNi.@qu^UJB+cua*g/GC<GL+iQQarD5<*F.2?h7,Jc>d8#gCde.=2&X.&k9r4`@E7r,BhD:[6\"VY:^pb6=J]*LJ9)DAfHfpI,kglAZYQ*IF+PX69[2PWifmr&r>C'tpKi1bE2T)`qL4eC>9dmg~>endstream\nendobj\nxref\n0 23\n0000000000 65535 f \n0000000061 00000 n \n0000000122 00000 n \n0000000229 00000 n \n0000000341 00000 n \n0000000460 00000 n \n0000000537 00000 n \n0000000742 00000 n \n0000000947 00000 n \n0000001152 00000 n \n0000001357 00000 n \n0000001563 00000 n \n0000001769 00000 n \n0000001975 00000 n \n0000002045 00000 n \n0000002326 00000 n \n0000002425 00000 n \n0000005132 00000 n \n0000005900 00000 n \n0000008513 00000 n \n0000011017 00000 n \n0000013693 00000 n \n0000014441 00000 n \ntrailer\n<<\n/ID \n[<4239fae42a377fe51f7be6d586d76f30><4239fae42a377fe51f7be6d586d76f30>]\n% ReportLab generated PDF document -- digest (opensource)",
+      "relevance": 0.4867
+    },
+    {
+      "chunk_id": "CHK_c8f92451",
+      "document": "dummy.pdf",
+      "page": 1,
+      "section": null,
+      "text": "t /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<\n\n>> \n  /Type /Page\n>>\nendobj\n9 0 obj\n<<\n/Contents 19 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 15 0 R /Resources <<\n/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<",
+      "relevance": 0.4821
+    },
+    {
+      "chunk_id": "CHK_7eb88b16",
+      "document": "dummy.pdf",
+      "page": 1,
+      "section": null,
+      "text": "t /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<\n\n>> \n  /Type /Page\n>>\nendobj\n8 0 obj\n<<\n/Contents 18 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent 15 0 R /Resources <<\n/Font 1 0 R /ProcSet [ /PDF /Text /ImageB /ImageC /ImageI ]\n>> /Rotate 0 /Trans <<",
+      "relevance": 0.4802
+    }
+  ],
+  "observations": [
+    "[Step 1 - Multimodal OCR & Inspection Parsing]:\nTool 'document.ocr_parse' executed successfully.",
+    "[Step 2 - Grounded SOP Knowledge Retrieval]:\nTool 'knowledge.search' executed successfully.",
+    "[Step 3 - Reconcile Findings & SOP Evidence Synthesis]:\n[MockResponse from qwen3:8b]: Reasoning completed for prompt 'User Query: Analyze scanned in...'",
+    "[Step 4 - Generate Official MRPL Approval Note (DOCX)]:\nTool 'artifact.generate_docx' executed successfully."
+  ],
+  "verification_results": {
+    "passed": true,
+    "checks_performed": [
+      "Tool execution status check",
+      "Artifact generation & cryptographic hash validation",
+      "Observability and knowledge grounding check",
+      "Approval Note 8-Section Structural Integrity Check"
+    ],
+    "findings": [
+      "Artifact 'MRPL_Approval_Note_P_101_20260904_075847.docx' verified with SHA-256 signature: eb982a076478... (DOCX)",
+      "Captured 4 grounded observations across workflow steps.",
+      "Formal Microsoft Word (.docx) approval note deliverable successfully validated."
+    ],
+    "errors": [],
+    "recommendation": "Execution validated. Deliverable confirmed.",
+    "verified_at": "2026-09-04 07:58:47.219274"
+  },
+  "generated_artifacts": [
+    {
+      "artifact_id": "ART_74abb4fc",
+      "task_id": "TASK_4d36412c",
+      "filename": "MRPL_Approval_Note_P_101_20260904_075847.docx",
+      "type": "docx",
+      "created_at": "2026-09-04T07:58:47.196450",
+      "source_documents": [
+        "inspection_report.pdf",
+        "MRPL_SOP_P101.pdf"
+      ],
+      "models_used": [
+        "qwen2.5vl:7b",
+        "qwen3:8b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "eb982a076478c92432e4e59a2a90e767e9464020ef8c4b9ee80656ddd9170bcf",
+      "size_bytes": 38002,
+      "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260904_075847.docx",
+      "download_url": "/api/v1/artifacts/ART_74abb4fc/download",
+      "metadata": {
+        "equipment_tag": "P-101",
+        "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+      }
+    }
+  ],
+  "errors": [],
+  "retry_count": 0,
+  "max_retries": 3,
+  "requires_human_approval": false,
+  "created_at": "2026-09-04 07:58:39.169253",
+  "updated_at": "2026-09-04 07:58:47.226944",
+  "completed_at": "2026-09-04 07:58:47.223393",
+  "execution_trace": [
+    {
+      "event_id": "EVT_bba39c8c",
+      "task_id": "TASK_4d36412c",
+      "event_type": "TASK_STARTED",
+      "stage": "INIT",
+      "message": "Initializing Sovereign Agent for goal: 'Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX.'",
+      "data": {},
+      "timestamp": "2026-09-04 07:58:39.173361"
+    },
+    {
+      "event_id": "EVT_29518d48",
+      "task_id": "TASK_4d36412c",
+      "event_type": "MODELS_ROUTED",
+      "stage": "ROUTING",
+      "message": "Capability router selected primary model: qwen2.5vl:7b",
+      "data": {
+        "primary_model": "qwen2.5vl:7b",
+        "stage_models": {
+          "vision": "qwen2.5vl:7b",
+          "reasoning": "qwen3:8b"
+        },
+        "reason": "Vision capability required: Routed to Qwen2.5-VL for visual document/drawing understanding."
+      },
+      "timestamp": "2026-09-04 07:58:46.851035"
+    },
+    {
+      "event_id": "EVT_777cbd0f",
+      "task_id": "TASK_4d36412c",
+      "event_type": "PLAN_GENERATED",
+      "stage": "PLANNING",
+      "message": "Generated 4-step industrial execution plan.",
+      "data": {
+        "steps": [
+          {
+            "step_id": "STEP_2f52353a",
+            "order": 1,
+            "title": "Multimodal OCR & Inspection Parsing",
+            "description": "Extract equipment readings, vibration levels, and observed anomalies from inspection_p101.pdf.",
+            "tool_name": "document.ocr_parse",
+            "tool_args": {
+              "file_path": "inspection_p101.pdf",
+              "focus_area": "readings_and_abnormalities"
+            },
+            "assigned_model": "qwen2.5vl:7b",
+            "status": "pending",
+            "observation": null,
+            "error": null,
+            "started_at": null,
+            "completed_at": null
+          },
+          {
+            "step_id": "STEP_22917b3d",
+            "order": 2,
+            "title": "Grounded SOP Knowledge Retrieval",
+            "description": "Retrieve governing MRPL maintenance SOPs, safety vibration thresholds, and risk criteria.",
+            "tool_name": "knowledge.search",
+            "tool_args": {
+              "query": "vibration velocity thresholds pump P-101 SOP Section 4.2",
+              "limit": 3
+            },
+            "assigned_model": "qwen3:8b",
+            "status": "pending",
+            "observation": null,
+            "error": null,
+            "started_at": null,
+            "completed_at": null
+          },
+          {
+            "step_id": "STEP_ffaeba7d",
+            "order": 3,
+            "title": "Reconcile Findings & SOP Evidence Synthesis",
+            "description": "Reconcile empirical measurements (4.8 mm/s vibration) with SOP limits (4.5 mm/s) and draft all 8 required technical sections.",
+            "tool_name": null,
+            "tool_args": {},
+            "assigned_model": "qwen3:8b",
+            "status": "pending",
+            "observation": null,
+            "error": null,
+            "started_at": null,
+            "completed_at": null
+          },
+          {
+            "step_id": "STEP_052091ae",
+            "order": 4,
+            "title": "Generate Official MRPL Approval Note (DOCX)",
+            "description": "Produce formal, verified Microsoft Word (.docx) Approval Note deliverable with SHA-256 cryptographic provenance.",
+            "tool_name": "artifact.generate_docx",
+            "tool_args": {
+              "subject": "Approval for Overhaul and Seal Replacement - Pump P-101",
+              "equipment_id": "P-101",
+              "sop_reference": "MRPL SOP Section 4.2"
+            },
+            "assigned_model": "qwen3:8b",
+            "status": "pending",
+            "observation": null,
+            "error": null,
+            "started_at": null,
+            "completed_at": null
+          }
+        ]
+      },
+      "timestamp": "2026-09-04 07:58:46.852561"
+    },
+    {
+      "event_id": "EVT_edf16e76",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_STARTED",
+      "stage": "EXECUTE",
+      "message": "Executing Step 1/4: Multimodal OCR & Inspection Parsing",
+      "data": {
+        "step_id": "STEP_2f52353a",
+        "tool": "document.ocr_parse",
+        "model": "qwen2.5vl:7b"
+      },
+      "timestamp": "2026-09-04 07:58:46.854680"
+    },
+    {
+      "event_id": "EVT_a7b4262b",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_COMPLETED",
+      "stage": "OBSERVE",
+      "message": "Completed Step 1: Multimodal OCR & Inspection Parsing",
+      "data": {
+        "observation": "Tool 'document.ocr_parse' executed successfully."
+      },
+      "timestamp": "2026-09-04 07:58:46.884818"
+    },
+    {
+      "event_id": "EVT_556e6bd2",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_STARTED",
+      "stage": "EXECUTE",
+      "message": "Executing Step 2/4: Grounded SOP Knowledge Retrieval",
+      "data": {
+        "step_id": "STEP_22917b3d",
+        "tool": "knowledge.search",
+        "model": "qwen3:8b"
+      },
+      "timestamp": "2026-09-04 07:58:46.884818"
+    },
+    {
+      "event_id": "EVT_c3171e0a",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_COMPLETED",
+      "stage": "OBSERVE",
+      "message": "Completed Step 2: Grounded SOP Knowledge Retrieval",
+      "data": {
+        "observation": "Tool 'knowledge.search' executed successfully."
+      },
+      "timestamp": "2026-09-04 07:58:46.927672"
+    },
+    {
+      "event_id": "EVT_cc18b3b3",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_STARTED",
+      "stage": "EXECUTE",
+      "message": "Executing Step 3/4: Reconcile Findings & SOP Evidence Synthesis",
+      "data": {
+        "step_id": "STEP_ffaeba7d",
+        "tool": null,
+        "model": "qwen3:8b"
+      },
+      "timestamp": "2026-09-04 07:58:46.928329"
+    },
+    {
+      "event_id": "EVT_55bab306",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_COMPLETED",
+      "stage": "OBSERVE",
+      "message": "Completed Step 3: Reconcile Findings & SOP Evidence Synthesis",
+      "data": {
+        "observation": "[MockResponse from qwen3:8b]: Reasoning completed for prompt 'User Query: Analyze scanned in...'"
+      },
+      "timestamp": "2026-09-04 07:58:46.942122"
+    },
+    {
+      "event_id": "EVT_acad81d6",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_STARTED",
+      "stage": "EXECUTE",
+      "message": "Executing Step 4/4: Generate Official MRPL Approval Note (DOCX)",
+      "data": {
+        "step_id": "STEP_052091ae",
+        "tool": "artifact.generate_docx",
+        "model": "qwen3:8b"
+      },
+      "timestamp": "2026-09-04 07:58:46.942122"
+    },
+    {
+      "event_id": "EVT_365763ac",
+      "task_id": "TASK_4d36412c",
+      "event_type": "STEP_COMPLETED",
+      "stage": "OBSERVE",
+      "message": "Completed Step 4: Generate Official MRPL Approval Note (DOCX)",
+      "data": {
+        "observation": "Tool 'artifact.generate_docx' executed successfully."
+      },
+      "timestamp": "2026-09-04 07:58:47.219274"
+    },
+    {
+      "event_id": "EVT_cbe5dff1",
+      "task_id": "TASK_4d36412c",
+      "event_type": "VERIFICATION_START",
+      "stage": "VERIFY",
+      "message": "Running rigorous verification checks on execution traces and artifacts...",
+      "data": {},
+      "timestamp": "2026-09-04 07:58:47.219274"
+    },
+    {
+      "event_id": "EVT_043de2cb",
+      "task_id": "TASK_4d36412c",
+      "event_type": "VERIFICATION_PASSED",
+      "stage": "VERIFY",
+      "message": "All verification criteria satisfied. Cryptographic provenance confirmed.",
+      "data": {
+        "verification": {
+          "passed": true,
+          "checks_performed": [
+            "Tool execution status check",
+            "Artifact generation & cryptographic hash validation",
+            "Observability and knowledge grounding check",
+            "Approval Note 8-Section Structural Integrity Check"
+          ],
+          "findings": [
+            "Artifact 'MRPL_Approval_Note_P_101_20260904_075847.docx' verified with SHA-256 signature: eb982a076478... (DOCX)",
+            "Captured 4 grounded observations across workflow steps.",
+            "Formal Microsoft Word (.docx) approval note deliverable successfully validated."
+          ],
+          "errors": [],
+          "recommendation": "Execution validated. Deliverable confirmed.",
+          "verified_at": "2026-09-04 07:58:47.219274"
+        }
+      },
+      "timestamp": "2026-09-04 07:58:47.223393"
+    },
+    {
+      "event_id": "EVT_9ca1346a",
+      "task_id": "TASK_4d36412c",
+      "event_type": "TASK_COMPLETED",
+      "stage": "COMPLETE",
+      "message": "Sovereign task completed successfully with 1 verified artifact(s).",
+      "data": {
+        "artifacts": [
+          {
+            "artifact_id": "ART_74abb4fc",
+            "task_id": "TASK_4d36412c",
+            "filename": "MRPL_Approval_Note_P_101_20260904_075847.docx",
+            "type": "docx",
+            "created_at": "2026-09-04T07:58:47.196450",
+            "source_documents": [
+              "inspection_report.pdf",
+              "MRPL_SOP_P101.pdf"
+            ],
+            "models_used": [
+              "qwen2.5vl:7b",
+              "qwen3:8b"
+            ],
+            "verification_status": "verified",
+            "verified": true,
+            "sha256_hash": "eb982a076478c92432e4e59a2a90e767e9464020ef8c4b9ee80656ddd9170bcf",
+            "size_bytes": 38002,
+            "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260904_075847.docx",
+            "download_url": "/api/v1/artifacts/ART_74abb4fc/download",
+            "metadata": {
+              "equipment_tag": "P-101",
+              "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+            }
+          }
+        ]
+      },
+      "timestamp": "2026-09-04 07:58:47.226944"
+    }
+  ]
+}

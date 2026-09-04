@@ -86,3 +86,8 @@ class AgentState(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
     execution_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    current_streaming_text: Optional[str] = None
+    streaming_model: Optional[str] = None
+    change_summaries: List[Dict[str, Any]] = Field(default_factory=list)
+    modified_files: List[str] = Field(default_factory=list)
+

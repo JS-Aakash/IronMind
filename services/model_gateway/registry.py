@@ -1,17 +1,115 @@
+import json
 import logging
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 from packages.shared.models.enums import ModelRole
 from services.model_gateway.models import ModelDefinition
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_ROLE_MODELS: Dict[str, str] = {
+    "routing": "qwen3:0.6b",
+    "reasoning": "qwen3:8b",
+    "coding": "qwen2.5-coder:7b",
+    "vision": "qwen2.5vl:7b",
+}
+
 
 class ModelRegistry:
     """Registry maintaining definitions, capabilities, and availability configuration for local models."""
 
-    def __init__(self):
+    def __init__(self, storage_dir: str = "storage/models"):
+        self.storage_dir = Path(storage_dir)
+        self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self.config_file = self.storage_dir / "roles_config.json"
         self._models: Dict[str, ModelDefinition] = {}
+        self._role_models: Dict[str, str] = dict(DEFAULT_ROLE_MODELS)
         self._initialize_default_models()
+        self._load_config()
+
+    def _load_config(self) -> None:
+        """Load persisted custom role assignments from disk."""
+        if self.config_file.exists():
+            try:
+                data = json.loads(self.config_file.read_text(encoding="utf-8"))
+                roles = data.get("roles", {})
+                for r, m in roles.items():
+                    if m:
+                        self.set_model_for_role(r, m, save=False)
+            except Exception as e:
+                logger.warning("Could not load roles_config.json: %s", e)
+
+    def _save_config(self) -> None:
+        """Persist current role model assignments to disk."""
+        try:
+            data = {
+                "roles": self._role_models,
+            }
+            self.config_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.warning("Could not save roles_config.json: %s", e)
+
+    def get_model_for_role(self, role: Union[ModelRole, str]) -> str:
+        """Get the active model tag assigned to a given role."""
+        role_key = role.value if isinstance(role, ModelRole) else str(role).lower()
+        return self._role_models.get(role_key, DEFAULT_ROLE_MODELS.get(role_key, "qwen3:8b"))
+
+    def get_role_for_model(self, model_name: str) -> Optional[str]:
+        """Find role key assigned to a given model identifier."""
+        clean = model_name.lower().strip()
+        for r, m in self._role_models.items():
+            if m.lower().strip() == clean or m.lower().replace("-", "") == clean.replace("-", ""):
+                return r
+        return None
+
+    def set_model_for_role(
+        self,
+        role: Union[ModelRole, str],
+        model_tag: str,
+        display_name: Optional[str] = None,
+        save: bool = True,
+    ) -> ModelDefinition:
+        """Assign any local model to a functional role (e.g. qwen3:14b to reasoning)."""
+        role_key = role.value if isinstance(role, ModelRole) else str(role).lower()
+        clean_tag = model_tag.strip()
+        
+        try:
+            role_enum = ModelRole(role_key)
+        except Exception:
+            role_enum = ModelRole.REASONING
+
+        self._role_models[role_key] = clean_tag
+
+        model_def = self.get_model(clean_tag)
+        if not model_def:
+            pretty_name = display_name or clean_tag.capitalize().replace(":", " ")
+            vram_est = (
+                450 if ("0.6b" in clean_tag.lower() or "0.5b" in clean_tag.lower())
+                else (8000 if "14b" in clean_tag.lower() else (5000 if "8b" in clean_tag.lower() else 4500))
+            )
+            model_def = ModelDefinition(
+                name=clean_tag,
+                display_name=pretty_name,
+                provider="ollama",
+                role=role_enum,
+                capabilities=[role_key, "inference"],
+                context_length=32768 if "0.6b" not in clean_tag else 8192,
+                vram_estimate_mb=vram_est,
+                enabled=True,
+                description=f"Local open-weight {clean_tag} assigned to {role_key.capitalize()} role.",
+            )
+            self._models[clean_tag] = model_def
+        else:
+            model_def.role = role_enum
+            model_def.enabled = True
+            if display_name:
+                model_def.display_name = display_name
+
+        if save:
+            self._save_config()
+
+        logger.info("Assigned role '%s' to model '%s'", role_key, clean_tag)
+        return model_def
 
     def _initialize_default_models(self) -> None:
         """Register the default open-weight models specified for IronMind."""

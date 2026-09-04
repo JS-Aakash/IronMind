@@ -1,0 +1,8 @@
+{
+  "roles": {
+    "routing": "qwen3:0.6b",
+    "reasoning": "qwen3:8b",
+    "coding": "qwen2.5-coder:7b",
+    "vision": "qwen2.5vl:7b"
+  }
+}

@@ -54,12 +54,13 @@ class PdfLayoutExtractor:
             logger.warning("pypdf parsing encountered an error: %s", str(e))
 
         if not extracted or not pages:
-            # Sovereign fallback parser for demo / text-based synthetic inspection reports
+            is_real_pdf = raw_bytes[:5] == b"%PDF-"
             text_candidate = ""
-            try:
-                text_candidate = raw_bytes.decode("utf-8", errors="ignore")
-            except Exception:
-                pass
+            if not is_real_pdf:
+                try:
+                    text_candidate = raw_bytes.decode("utf-8", errors="ignore")
+                except Exception:
+                    pass
 
             if text_candidate and len(text_candidate.strip()) > 30:
                 pages.append(

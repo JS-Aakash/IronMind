@@ -78,6 +78,8 @@ class KnowledgeDocument(BaseModel):
     chunk_count: int = 0
     uploaded_at: datetime
     size_bytes: int
+    ai_description: Optional[str] = None
+    key_topics: List[str] = Field(default_factory=list)
 
 
 class ArtifactItem(BaseModel):

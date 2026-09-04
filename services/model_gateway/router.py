@@ -84,14 +84,48 @@ You MUST return ONLY valid JSON in this exact format:
         self.registry = registry or ModelRegistry()
         self.base_url = base_url or self.OLLAMA_BASE_URL
 
+    def _get_system_prompt(self) -> str:
+        coding_m = self.registry.get_model_for_role(ModelRole.CODING)
+        vision_m = self.registry.get_model_for_role(ModelRole.VISION)
+        reasoning_m = self.registry.get_model_for_role(ModelRole.REASONING)
+        return f"""You are the IronMind Sovereign AI Classifier for an on-premise industrial refinery workbench.
+Classify the user's task and select the best specialized local model.
+
+STRICT Model Assignment Rules:
+1. "{coding_m}" (Role: Python Coding & Sandbox)
+   - MANDATORY for: writing Python code, scripts, pytest unit tests, code debugging, sandbox execution.
+   - Task Types: "coding"
+
+2. "{vision_m}" (Role: Vision & Multimodal)
+   - MANDATORY for: scanned documents, PDFs, images, OCR, P&ID engineering diagrams, blueprints, drawings.
+   - Task Types: "document_analysis", "multimodal_pid"
+
+3. "{reasoning_m}" (Role: Industrial Reasoning & Planning)
+   - MANDATORY for: executive planning, SOP synthesis, approval note drafting, compliance review, general engineering reasoning.
+   - Task Types: "approval_note_generation", "general_reasoning", "engineering_calc"
+
+You MUST return ONLY valid JSON in this exact format:
+{{
+  "task_type": "coding" | "document_analysis" | "multimodal_pid" | "approval_note_generation" | "engineering_calc" | "general_reasoning",
+  "primary_model": "{coding_m}" | "{vision_m}" | "{reasoning_m}",
+  "requires_vision": true/false,
+  "requires_coding": true/false,
+  "requires_sandbox": true/false,
+  "requires_rag": true/false,
+  "target_artifact": "docx" | "xlsx" | "python" | null,
+  "stage_models": {{ "vision": "{vision_m}", "reasoning": "{reasoning_m}", "coding": "{coding_m}" }},
+  "routing_reason": "Brief 1-sentence reason why this model was chosen"
+}}"""
+
     async def _classify_with_qwen_async(self, request: RoutingRequest) -> Optional[Dict[str, Any]]:
-        """Query local qwen3:0.6b via Ollama API for fast JSON classification."""
+        """Query local router model via Ollama API for fast JSON classification."""
+        router_model = self.registry.get_model_for_role(ModelRole.ROUTING)
         url = f"{self.base_url}/api/generate"
         user_prompt = f"Goal: {request.goal}\nAttached Files: {request.attached_files}\nContext: {request.context}"
 
         payload = {
-            "model": self.ROUTER_MODEL,
-            "system": self.SYSTEM_PROMPT,
+            "model": router_model,
+            "system": self._get_system_prompt(),
             "prompt": user_prompt,
             "format": "json",
             "stream": False,
@@ -111,21 +145,22 @@ You MUST return ONLY valid JSON in this exact format:
                         # Extract JSON object
                         parsed = self._extract_json(raw_text)
                         if parsed and "primary_model" in parsed:
-                            logger.info("qwen3:0.6b AI router selected: %s", parsed.get("primary_model"))
+                            logger.info("AI router (%s) selected: %s", router_model, parsed.get("primary_model"))
                             return parsed
         except Exception as e:
-            logger.debug("qwen3:0.6b fast router call skipped (falling back): %s", str(e))
+            logger.debug("AI router (%s) call skipped (falling back): %s", router_model, str(e))
 
         return None
 
     def _classify_with_qwen_sync(self, request: RoutingRequest) -> Optional[Dict[str, Any]]:
-        """Synchronous wrapper for qwen3:0.6b classifier."""
+        """Synchronous wrapper for AI router classifier."""
+        router_model = self.registry.get_model_for_role(ModelRole.ROUTING)
         url = f"{self.base_url}/api/generate"
         user_prompt = f"Goal: {request.goal}\nAttached Files: {request.attached_files}\nContext: {request.context}"
 
         payload = {
-            "model": self.ROUTER_MODEL,
-            "system": self.SYSTEM_PROMPT,
+            "model": router_model,
+            "system": self._get_system_prompt(),
             "prompt": user_prompt,
             "format": "json",
             "stream": False,
@@ -146,7 +181,7 @@ You MUST return ONLY valid JSON in this exact format:
                         if parsed and "primary_model" in parsed:
                             return parsed
         except Exception as e:
-            logger.debug("qwen3:0.6b sync router skipped (falling back): %s", str(e))
+            logger.debug("AI router (%s) sync call skipped (falling back): %s", router_model, str(e))
 
         return None
 
@@ -368,50 +403,60 @@ You MUST return ONLY valid JSON in this exact format:
 
         stages: List[StageRouting] = []
         stage_models: Dict[str, str] = {}
+        coding_model = self.registry.get_model_for_role(ModelRole.CODING)
+        reasoning_model = self.registry.get_model_for_role(ModelRole.REASONING)
+        vision_model = self.registry.get_model_for_role(ModelRole.VISION)
+        router_model = self.registry.get_model_for_role(ModelRole.ROUTING)
 
         if analysis.requires_vision:
             stages.append(StageRouting(
                 stage_name="vision_ocr_extraction",
                 required_capability="multimodal_vision",
-                selected_model="qwen2.5vl:7b",
+                selected_model=vision_model,
                 reason="Multimodal vision model selected for visual extraction.",
             ))
-            stage_models["vision"] = "qwen2.5vl:7b"
+            stage_models["vision"] = vision_model
 
         if analysis.requires_coding:
             stages.append(StageRouting(
                 stage_name="code_generation_and_testing",
                 required_capability="python_coding",
-                selected_model="qwen2.5-coder:7b",
+                selected_model=coding_model,
                 reason="Coding specialist selected for syntax correctness.",
             ))
-            stage_models["coding"] = "qwen2.5-coder:7b"
+            stage_models["coding"] = coding_model
 
         if not analysis.requires_coding or analysis.requires_artifact_generation or analysis.requires_rag:
             stages.append(StageRouting(
                 stage_name="reasoning_and_synthesis",
                 required_capability="reasoning_planning",
-                selected_model="qwen3:8b",
+                selected_model=reasoning_model,
                 reason="Primary reasoning model selected for ReAct orchestration.",
             ))
-            stage_models["reasoning"] = "qwen3:8b"
+            stage_models["reasoning"] = reasoning_model
 
         # Determine Primary Model: Assign specialist models based on classified requirements
         if request.preferred_model:
             primary_model = request.preferred_model
             routing_reason = f"User override: {request.preferred_model}"
         elif analysis.requires_coding or (ai_res and ai_res.get("task_type") == "coding"):
-            primary_model = "qwen2.5-coder:7b"
-            routing_reason = (ai_res and ai_res.get("routing_reason")) or "Coding capability required: Routed to Qwen2.5-Coder for verified script execution."
+            primary_model = coding_model
+            routing_reason = (ai_res and ai_res.get("routing_reason")) or f"Coding capability required: Routed to {coding_model} for verified script execution."
         elif analysis.requires_vision and not analysis.requires_coding:
-            primary_model = "qwen2.5vl:7b"
-            routing_reason = (ai_res and ai_res.get("routing_reason")) or "Vision capability required: Routed to Qwen2.5-VL for visual document/drawing understanding."
-        elif ai_res and ai_res.get("primary_model") in ["qwen2.5-coder:7b", "qwen2.5vl:7b", "qwen3:8b"]:
-            primary_model = ai_res["primary_model"]
-            routing_reason = ai_res.get("routing_reason") or f"Lightweight AI router (qwen3:0.6b) selected {primary_model}."
+            primary_model = vision_model
+            routing_reason = (ai_res and ai_res.get("routing_reason")) or f"Vision capability required: Routed to {vision_model} for visual document/drawing understanding."
+        elif ai_res and ai_res.get("primary_model"):
+            cand = ai_res["primary_model"].lower()
+            if "coder" in cand or "code" in cand:
+                primary_model = coding_model
+            elif "vl" in cand or "vision" in cand:
+                primary_model = vision_model
+            else:
+                primary_model = reasoning_model
+            routing_reason = ai_res.get("routing_reason") or f"Lightweight AI router ({router_model}) selected {primary_model}."
         else:
-            primary_model = scores[0].model_name if scores else "qwen3:8b"
-            routing_reason = f"Selected highest scoring model: {primary_model}. General/Reasoning task: Routed to Qwen3 (8B) for high-order planning and knowledge synthesis."
+            primary_model = reasoning_model
+            routing_reason = f"General/Reasoning task: Routed to {reasoning_model} for high-order planning and knowledge synthesis."
 
         alternatives = [s.model_name for s in scores if s.model_name != primary_model and s.is_available]
 

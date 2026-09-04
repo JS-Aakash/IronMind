@@ -23,6 +23,9 @@ import {
   Sparkles,
   RefreshCw,
   FileCheck2,
+  FileSpreadsheet,
+  Calculator,
+  Table,
   Paperclip,
   X,
   Image as ImageIcon,
@@ -207,29 +210,45 @@ export default function WorkbenchPage() {
   const [activityLogs, setActivityLogs] = useState<ActivityLogItem[]>([]);
   const [copiedCode, setCopiedCode] = useState(false);
   const [showRawOutput, setShowRawOutput] = useState(false);
+  const [streamingText, setStreamingText] = useState<string>("");
+  const [streamingModel, setStreamingModel] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [showToolTrace, setShowToolTrace] = useState<boolean>(false);
+  const [expandedToolIdx, setExpandedToolIdx] = useState<number | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   // 3. Local Model Manager State
   const [modelsStatus, setModelsStatus] = useState<LocalModelStatus[]>([]);
   const [loadingModelId, setLoadingModelId] = useState<string | null>(null);
+  const loadingModelIdRef = useRef<string | null>(null);
   const [isRefreshingModels, setIsRefreshingModels] = useState(false);
-
   const taskFileInputRef = useRef<HTMLInputElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    loadingModelIdRef.current = loadingModelId;
+  }, [loadingModelId]);
 
   // Fetch real model status on mount and poll periodically every 4 seconds
   useEffect(() => {
     fetchModelsStatus();
     const interval = setInterval(() => {
-      fetchModelsStatus(true);
+      // Do not poll or overwrite state while a model is in the middle of loading/unloading
+      if (!loadingModelIdRef.current) {
+        fetchModelsStatus(true);
+      }
     }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchModelsStatus = async (silent = false) => {
+    if (loadingModelIdRef.current) return;
     try {
       if (!silent) setIsRefreshingModels(true);
       const res = await api.getModelsStatus();
-      setModelsStatus(res);
+      if (!loadingModelIdRef.current) {
+        setModelsStatus(res);
+      }
     } catch (err) {
       console.error("Failed to fetch model residency status:", err);
     } finally {
@@ -240,19 +259,54 @@ export default function WorkbenchPage() {
   const handleToggleModelLoad = async (modelId: string, currentlyWarm: boolean) => {
     try {
       setLoadingModelId(modelId);
+      loadingModelIdRef.current = modelId;
+
+      // Optimistic update: keep other models stable, mark target as LOADING or UNLOADED
+      setModelsStatus((prev) =>
+        prev.map((m) => {
+          if (m.id === modelId) {
+            return {
+              ...m,
+              status: currentlyWarm ? "UNLOADED" : "LOADING",
+              is_warm: currentlyWarm ? false : true,
+            };
+          }
+          // If loading a GPU specialist model, the other GPU specialist model is replaced
+          const targetModel = prev.find((x) => x.id === modelId);
+          const isTargetRouter = targetModel?.role === "routing" || modelId.includes("0.6b");
+          const isCurrentRouter = m.role === "routing" || m.id.includes("0.6b");
+          if (!currentlyWarm && !isTargetRouter && !isCurrentRouter) {
+            return {
+              ...m,
+              status: "UNLOADED",
+              is_warm: false,
+              vram_usage_mb: 0,
+            };
+          }
+          return m;
+        })
+      );
+
       if (currentlyWarm) {
         await api.unloadModel(modelId);
-        appendLog("MODEL", `Model ${modelId} released from local VRAM.`);
+        appendLog("MODEL", `Model ${modelId} released from local memory.`);
       } else {
         await api.loadModel(modelId);
-        appendLog("MODEL", `Model ${modelId} preloaded and warmed in local VRAM.`);
+        appendLog("MODEL", `Model ${modelId} preloaded and warmed in local memory.`);
       }
-      await fetchModelsStatus(false);
+
+      const updated = await api.getModelsStatus();
+      setModelsStatus(updated);
     } catch (err: any) {
       console.error(`Error toggling model ${modelId}:`, err);
       appendLog("MODEL", `Failed to modify ${modelId}: ${err?.message || "Ollama error"}`);
+      try {
+        const fresh = await api.getModelsStatus();
+        setModelsStatus(fresh);
+      } catch {}
     } finally {
       setLoadingModelId(null);
+      loadingModelIdRef.current = null;
     }
   };
 
@@ -374,13 +428,75 @@ export default function WorkbenchPage() {
       setActiveStageIndex(1); // 02 Routing in progress
       appendLog("TASK", `Task registered: ${created.task_id}`);
 
-      // 2. Start fast live polling (every 600ms) to track real-time agent progression
+      // Initialize Token Streaming state
+      setStreamingText("");
+      setStreamingModel("");
+      setIsStreaming(false);
+
+      // 2. Open Server-Sent Events (SSE) for token-by-token real-time streaming
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+      const sseUrl = `${apiBase}/tasks/${created.task_id}/events`;
+      try {
+        const es = new EventSource(sseUrl);
+        eventSourceRef.current = es;
+
+        es.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.event_type === "TOKEN_CHUNK") {
+              setIsStreaming(true);
+              const text = data.data?.accumulated ?? (data.data?.token || data.message || "");
+              if (data.data?.accumulated !== undefined) {
+                setStreamingText(data.data.accumulated);
+              } else {
+                setStreamingText((prev) => prev + text);
+              }
+              if (data.data?.model) {
+                setStreamingModel(data.data.model);
+              }
+            } else if (data.event_type === "STREAM_STARTED") {
+              setIsStreaming(true);
+              setStreamingText("");
+              if (data.data?.model) {
+                setStreamingModel(data.data.model);
+              }
+            } else if (data.event_type === "STEP_STARTED") {
+              // Reset stream for new step
+              setStreamingText("");
+            } else if (data.event_type === "TASK_COMPLETED" || data.event_type === "TASK_FAILED") {
+              setIsStreaming(false);
+              es.close();
+            }
+          } catch (e) {
+            console.error("Error parsing SSE event:", e);
+          }
+        };
+
+        es.onerror = () => {
+          es.close();
+        };
+      } catch (sseErr) {
+        console.warn("SSE connection error:", sseErr);
+      }
+
+      // 3. Start fast live polling (every 600ms) to track real-time agent progression and backup streaming text
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = setInterval(async () => {
         try {
           const update = await api.getTaskById(created.task_id);
           setActiveTask(update);
           updateStageProgress(update);
+
+          if (update.current_streaming_text) {
+            setStreamingText(update.current_streaming_text);
+            setIsStreaming(true);
+          }
+          if (update.streaming_model) {
+            setStreamingModel(update.streaming_model);
+          }
 
           if (update.execution_trace && update.execution_trace.length > 0) {
             syncTraceToLogs(update.execution_trace);
@@ -390,11 +506,16 @@ export default function WorkbenchPage() {
               clearInterval(pollingIntervalRef.current);
               pollingIntervalRef.current = null;
             }
+            if (eventSourceRef.current) {
+              eventSourceRef.current.close();
+              eventSourceRef.current = null;
+            }
+            setIsStreaming(false);
           }
         } catch {}
       }, 600);
 
-      // 3. Execute Task Workflow
+      // 4. Execute Task Workflow
       try {
         const executed = await api.executeTask(created.task_id, { uploaded_files: files });
         setActiveTask(executed);
@@ -427,6 +548,11 @@ export default function WorkbenchPage() {
       setExecutionError(err?.message || "Task submission failed.");
     } finally {
       setIsSubmitting(false);
+      setIsStreaming(false);
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
         pollingIntervalRef.current = null;
@@ -435,17 +561,27 @@ export default function WorkbenchPage() {
   };
 
   const handleCancelTask = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     }
     setIsSubmitting(false);
+    setIsStreaming(false);
+    setStreamingText("");
     setActiveLiveStatus("failed");
     setExecutionError("Task cancelled by operator.");
     appendLog("TASK", "Execution cancelled by operator.");
   };
 
   const handleNewTask = () => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
@@ -457,6 +593,9 @@ export default function WorkbenchPage() {
     setActiveStageIndex(0);
     setExecutionError(null);
     setActivityLogs([]);
+    setStreamingText("");
+    setStreamingModel("");
+    setIsStreaming(false);
   };
 
   const copyToClipboard = (text: string) => {
@@ -479,6 +618,19 @@ export default function WorkbenchPage() {
 
   // Helper parser for actual generated Python code
   const extractCodeFromTask = () => {
+    if (activeLiveStatus === "running" && streamingText) {
+      if (streamingText.includes("```python")) {
+        const idx = streamingText.indexOf("```python") + 9;
+        const tail = streamingText.substring(idx);
+        return tail.split("```")[0];
+      }
+      if (streamingText.includes("```")) {
+        const idx = streamingText.indexOf("```") + 3;
+        const tail = streamingText.substring(idx);
+        return tail.split("```")[0];
+      }
+      return streamingText;
+    }
     if (!activeTask) return "";
     for (const obs of activeTask.observations || []) {
       const text = typeof obs === "string" ? obs : obs?.observation || "";
@@ -572,12 +724,53 @@ export default function WorkbenchPage() {
   const actualStdout = sandboxTool?.output?.stdout || "";
   const actualStderr = sandboxTool?.output?.stderr || "";
 
+  // Extraction of calculation tool output trace
+  const calculationTool = activeTask?.tool_calls?.find(
+    (t) => t.tool_name === "calculation.step_by_step" || t.output?.calculation_trace
+  );
+  const calcOutput = calculationTool?.output;
+  const calcTrace = calcOutput?.calculation_trace;
+
+  // Extraction of file and spreadsheet change summaries
+  const changeSummaries = (activeTask?.change_summaries && activeTask.change_summaries.length > 0)
+    ? activeTask.change_summaries
+    : (activeTask?.tool_calls || [])
+        .filter((t) => t.output?.change_summary)
+        .map((t) => {
+          const out = t.output;
+          const fname = out.updated_file
+            ? out.updated_file.split("/").pop()?.split("\\").pop()
+            : (t.arguments?.file_path?.split("/").pop()?.split("\\").pop() || "Modified File");
+          const changesList = Array.isArray(out.change_summary)
+            ? out.change_summary
+            : typeof out.change_summary === "string"
+            ? [out.change_summary]
+            : Object.entries(out.change_summary || {}).map(([k, v]) => `${k}: ${v}`);
+          return {
+            filename: fname,
+            file_path: out.updated_file || t.arguments?.file_path || "",
+            action: (t.arguments?.action === "create" ? "created" : "modified") as any,
+            changes: changesList,
+            sheets_affected: out.kpi_summary ? ["Raw_Inspection_Log", "KPI Summary"] : undefined,
+            sha256_hash: out.sha256_hash,
+            kpis_computed: out.kpi_summary,
+            timestamp: t.called_at || new Date().toISOString(),
+          };
+        });
+
+  // Extraction of non-coding business deliverables
+  const nonCodingDeliverables = (activeTask?.generated_artifacts || []).filter(
+    (art: any) => !art.filename?.endsWith(".py") || taskType !== "coding"
+  );
+
   const getFileIcon = (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase();
     if (["png", "jpg", "jpeg", "bmp", "svg", "webp"].includes(ext || ""))
       return <ImageIcon className="w-3.5 h-3.5 text-iron-accentPrimary" />;
     if (["pdf"].includes(ext || "")) return <FileText className="w-3.5 h-3.5 text-rose-400" />;
     if (["docx", "doc"].includes(ext || "")) return <FileType className="w-3.5 h-3.5 text-iron-accentPrimary" />;
+    if (["xlsx", "xls", "csv"].includes(ext || "")) return <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />;
+    if (["pptx", "ppt"].includes(ext || "")) return <FileType className="w-3.5 h-3.5 text-amber-400" />;
     return <FileCode className="w-3.5 h-3.5 text-iron-accentSecondary" />;
   };
 
@@ -664,13 +857,13 @@ export default function WorkbenchPage() {
             </div>
 
             <form onSubmit={handleRunTask} className="space-y-3.5" id="task-form">
-              {/* Controlled Fixed Height Task Input Field */}
+              {/* Controlled Height Task Input Field */}
               <div className="space-y-1">
                 <textarea
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
                   placeholder="Describe the work you want IronMind to complete... (e.g. Write a Python function to calculate pump efficiency and execute unit test cases in the sandbox.)"
-                  className="w-full h-32 px-4 py-3 rounded-lg bg-iron-panelSecondary border border-iron-border text-iron-textPrimary placeholder-iron-textSecondary/60 text-xs focus:outline-none focus:border-iron-accentPrimary transition resize-none leading-relaxed font-sans"
+                  className="w-full h-48 px-4 py-3 rounded-lg bg-iron-panelSecondary border border-iron-border text-iron-textPrimary placeholder-iron-textSecondary/60 text-xs focus:outline-none focus:border-iron-accentPrimary transition resize-none leading-relaxed font-sans"
                   required
                 />
               </div>
@@ -813,6 +1006,25 @@ export default function WorkbenchPage() {
                   </button>
                 )}
               </div>
+
+              {/* AI STREAMING TOKENS COMPONENT (Left column below Run Task button) */}
+              {activeLiveStatus === "running" && isStreaming && streamingText && (
+                <div className="mt-2.5 p-3.5 rounded-lg bg-[#060A14] border border-iron-accentPrimary/60 shadow-lg shadow-iron-accentPrimary/5 space-y-2 animate-pulse">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="text-iron-accentPrimary font-bold flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-iron-accentPrimary animate-ping" />
+                      <span>AI STREAMING TOKENS ({streamingModel || "LOCAL MODEL"})</span>
+                    </span>
+                    <span className="text-iron-textSecondary font-bold text-[10px]">
+                      {streamingText.split(/\s+/).filter(Boolean).length} tokens
+                    </span>
+                  </div>
+                  <div className="text-xs font-mono text-iron-textPrimary bg-black/60 p-2.5 rounded border border-iron-border/40 max-h-32 overflow-y-auto leading-relaxed">
+                    {streamingText.slice(-350)}
+                    <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-iron-accentPrimary animate-pulse align-middle" />
+                  </div>
+                </div>
+              )}
             </form>
           </div>
         </div>
@@ -961,7 +1173,7 @@ export default function WorkbenchPage() {
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border font-mono text-xs text-iron-textSecondary overflow-y-auto space-y-2 h-44">
+              <div className="p-3 rounded-lg bg-[#060A14] border border-iron-border font-mono text-xs text-iron-textSecondary overflow-y-auto space-y-2 h-28">
                 {activityLogs.length === 0 ? (
                   <div className="text-iron-textSecondary/50 text-center py-6 text-xs">
                     Awaiting task execution events...
@@ -1094,7 +1306,13 @@ export default function WorkbenchPage() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-iron-textPrimary flex items-center gap-1.5 font-mono">
                         <Code2 className="w-4 h-4 text-iron-accentPrimary" />
-                        <span>Verified Generated Python Code</span>
+                        <span>{activeLiveStatus === "running" && isStreaming ? "Live Streaming Generated Python Code" : "Verified Generated Python Code"}</span>
+                        {activeLiveStatus === "running" && isStreaming && (
+                          <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-mono bg-iron-accentPrimary/20 text-iron-accentPrimary font-bold flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-iron-accentPrimary animate-ping" />
+                            <span>STREAMING ({streamingModel || "Coding Model"})</span>
+                          </span>
+                        )}
                       </span>
                       <div className="flex items-center gap-2">
                         <button
@@ -1117,7 +1335,12 @@ export default function WorkbenchPage() {
                     </div>
 
                     <div className="p-4 rounded-lg bg-[#060A14] border border-iron-border font-mono text-xs text-iron-textPrimary h-72 overflow-y-auto leading-relaxed">
-                      <pre>{extractedCode || "# Code generation in progress..."}</pre>
+                      <pre>
+                        {extractedCode || (activeLiveStatus === "running" ? "# Initializing model and preparing token stream..." : "# Code generation in progress...")}
+                        {activeLiveStatus === "running" && isStreaming && (
+                          <span className="inline-block w-2 h-3.5 ml-0.5 bg-iron-accentPrimary animate-pulse align-middle" />
+                        )}
+                      </pre>
                     </div>
                   </div>
 
@@ -1305,6 +1528,25 @@ export default function WorkbenchPage() {
                   </div>
 
                   <div className="space-y-3 text-iron-textPrimary text-xs leading-relaxed">
+                    {/* Live Streaming Token Preview during running state */}
+                    {activeLiveStatus === "running" && streamingText && (
+                      <div className="p-4 rounded-lg bg-[#060A14] border border-iron-accentPrimary/50 shadow-md shadow-iron-accentPrimary/5 space-y-2.5 text-xs">
+                        <div className="flex items-center justify-between pb-1 border-b border-iron-border/40">
+                          <div className="flex items-center gap-2 text-[11px] font-mono font-bold text-iron-accentPrimary">
+                            <span className="w-2 h-2 rounded-full bg-iron-accentPrimary animate-ping" />
+                            <span>LIVE TOKEN STREAM • {streamingModel || resolvedModel || "Reasoning Model"}</span>
+                          </div>
+                          <span className="text-[10px] font-mono text-iron-textSecondary">
+                            {streamingText.split(/\s+/).filter(Boolean).length} tokens
+                          </span>
+                        </div>
+                        <div className="text-xs font-mono text-iron-textPrimary whitespace-pre-wrap leading-relaxed">
+                          {streamingText}
+                          <span className="inline-block w-2 h-4 ml-0.5 bg-iron-accentPrimary animate-pulse align-middle" />
+                        </div>
+                      </div>
+                    )}
+
                     {activeTask.observations && activeTask.observations.length > 0 ? (
                       activeTask.observations.map((obs: any, idx: number) => {
                         const obsText = typeof obs === "string" ? obs : obs?.observation || "";
@@ -1321,12 +1563,207 @@ export default function WorkbenchPage() {
                         );
                       })
                     ) : (
-                      <div className="p-4 rounded-lg bg-[#060A14] border border-iron-border text-xs font-mono text-iron-textSecondary">
-                        Synthesized response will appear upon step completion.
-                      </div>
+                      !streamingText && (
+                        <div className="p-4 rounded-lg bg-[#060A14] border border-iron-border text-xs font-mono text-iron-textSecondary">
+                          Synthesized response will appear upon step completion.
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
+
+                {/* Step-by-Step Calculation Engine Mathematical Trace (AST Grounded) */}
+                {calcTrace && (
+                  <div className="p-4 rounded-xl bg-iron-panelSecondary border border-iron-accentPrimary/40 space-y-3 font-mono text-xs shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-iron-border/60">
+                      <div className="flex items-center gap-2 font-bold text-iron-textPrimary text-xs">
+                        <Calculator className="w-4 h-4 text-iron-accentPrimary" />
+                        <span className="uppercase tracking-wider">
+                          Calculation Engine • Step-by-Step Mathematical Trace
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-iron-accentPrimary/15 border border-iron-accentPrimary/30 text-[10px] font-bold text-iron-accentPrimary">
+                          AST GROUNDED • NO HALLUCINATION
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded bg-iron-success/15 border border-iron-success/40 text-[10px] font-bold text-iron-success">
+                          = {calcTrace.step_5_verified_result} {calcTrace.unit || ""}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                      <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-2.5">
+                        <div>
+                          <div className="text-[10px] text-iron-accentPrimary uppercase font-bold tracking-wider">
+                            Step 1: Formula Definition
+                          </div>
+                          <div className="text-xs text-iron-textPrimary font-bold font-mono mt-0.5">
+                            {calcTrace.step_1_formula}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[10px] text-iron-textSecondary uppercase font-bold tracking-wider">
+                            Step 2: Parameter Bindings
+                          </div>
+                          <div className="text-[11px] text-iron-textSecondary font-mono mt-0.5 space-y-0.5">
+                            {typeof calcTrace.step_2_bindings === "object" && calcTrace.step_2_bindings !== null ? (
+                              Object.entries(calcTrace.step_2_bindings).map(([k, v]) => (
+                                <span key={k} className="inline-block mr-3">
+                                  <span className="text-iron-accentPrimary">{k}</span> = {String(v)}
+                                </span>
+                              ))
+                            ) : (
+                              <span>{String(calcTrace.step_2_bindings)}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-2.5">
+                        <div>
+                          <div className="text-[10px] text-iron-accentPrimary uppercase font-bold tracking-wider">
+                            Steps 3 & 4: Substitution & Reduction
+                          </div>
+                          <div className="text-[11px] text-iron-textSecondary font-mono mt-0.5 truncate">
+                            {calcTrace.step_3_substituted}
+                          </div>
+                          <div className="text-[11px] text-iron-textSecondary font-mono mt-0.5 truncate">
+                            {calcTrace.step_4_reduction}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-[10px] text-iron-success uppercase font-bold tracking-wider">
+                            Step 5: Final Verified Result
+                          </div>
+                          <div className="text-xs text-iron-success font-bold font-mono mt-0.5">
+                            {calcTrace.step_5_verified_result} {calcTrace.unit || ""}
+                            {calcTrace.notes ? ` (${calcTrace.notes})` : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Change Summary for Modified Files & Workbooks */}
+                {changeSummaries.length > 0 && (
+                  <div className="p-4 rounded-xl bg-iron-panelSecondary border border-emerald-500/40 space-y-3 text-xs shadow-sm">
+                    <div className="flex items-center justify-between pb-2 border-b border-iron-border/60">
+                      <div className="flex items-center gap-2 font-bold text-iron-textPrimary font-mono">
+                        <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                        <span className="uppercase tracking-wider">
+                          Change Summary for Modified Files & Workbooks ({changeSummaries.length})
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono font-bold text-emerald-400">
+                        MUTATIONS PRESERVED
+                      </span>
+                    </div>
+
+                    <div className="space-y-3">
+                      {changeSummaries.map((cs: any, idx: number) => (
+                        <div key={idx} className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-2.5">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 font-mono">
+                              {getFileIcon(cs.filename)}
+                              <span className="font-bold text-iron-textPrimary text-xs">{cs.filename}</span>
+                              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-iron-accentPrimary/20 text-iron-accentPrimary uppercase">
+                                {cs.action || "MODIFIED"}
+                              </span>
+                            </div>
+                            {cs.sha256_hash && (
+                              <div className="flex items-center gap-1 font-mono text-[10px] text-iron-textSecondary bg-iron-panel px-2 py-0.5 rounded border border-iron-border">
+                                <Hash className="w-3 h-3 text-iron-accentPrimary" />
+                                <span className="truncate max-w-[200px]">{cs.sha256_hash}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Computed KPIs Dashboard (if present) */}
+                          {cs.kpis_computed && (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-xs">
+                              {Object.entries(cs.kpis_computed).map(([k, v]: [string, any], kIdx: number) => (
+                                <div key={kIdx} className="p-2 rounded bg-iron-panel border border-iron-border/60">
+                                  <div className="text-[10px] text-iron-textSecondary uppercase truncate">
+                                    {k.replace(/_/g, " ")}
+                                  </div>
+                                  <div className="text-xs font-bold text-iron-accentPrimary truncate">
+                                    {typeof v === "number" ? v.toLocaleString() : String(v)}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Bulleted Atomic Changes */}
+                          <div className="space-y-1 font-mono text-xs text-iron-textSecondary pt-1">
+                            {(cs.changes || []).map((ch: string, cIdx: number) => (
+                              <div key={cIdx} className="flex items-start gap-2 text-iron-textPrimary/90">
+                                <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                                <span className="text-[11px] leading-relaxed">{ch}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Generated Business Deliverables (Non-Coding Workbooks & Documents) */}
+                {nonCodingDeliverables.length > 0 && (
+                  <div className="p-4 rounded-xl bg-iron-panelSecondary border border-iron-border space-y-3 text-xs shadow-sm">
+                    <div className="flex items-center justify-between pb-2 border-b border-iron-border/60">
+                      <div className="flex items-center gap-2 font-bold text-iron-textPrimary font-mono">
+                        <FileCheck2 className="w-4 h-4 text-iron-success" />
+                        <span className="uppercase tracking-wider">
+                          Generated Deliverable Artifacts ({nonCodingDeliverables.length})
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded bg-iron-success/15 border border-iron-success/30 text-[10px] font-mono font-bold text-iron-success">
+                        AIR-GAPPED DELIVERABLES
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {nonCodingDeliverables.map((art: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border flex items-center justify-between gap-3 text-xs"
+                        >
+                          <div className="flex items-center gap-2.5 truncate">
+                            <div className="p-2 rounded bg-iron-panel border border-iron-border/60 shrink-0">
+                              {getFileIcon(art.filename)}
+                            </div>
+                            <div className="truncate space-y-0.5">
+                              <div className="font-bold text-iron-textPrimary font-mono text-xs truncate">
+                                {art.filename}
+                              </div>
+                              <div className="text-[10px] text-iron-textSecondary font-mono flex items-center gap-2">
+                                <span>{art.type?.toUpperCase() || "DOCUMENT"}</span>
+                                <span>•</span>
+                                <span>{art.size_bytes ? `${(art.size_bytes / 1024).toFixed(1)} KB` : "Updated"}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <a
+                            href={`http://127.0.0.1:8000${art.download_url || `/api/v1/artifacts/${art.artifact_id}/download`}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 rounded-lg bg-iron-accentPrimary/15 hover:bg-iron-accentPrimary/25 text-iron-accentPrimary border border-iron-accentPrimary/30 font-mono text-xs font-bold transition flex items-center gap-1.5 shrink-0"
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            <span>Download</span>
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Verification Results & What IronMind Did side-by-side */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
@@ -1375,6 +1812,105 @@ export default function WorkbenchPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Real Tool Calls & Execution Trace Ledger (For All Tasks) */}
+            {activeTask.tool_calls && activeTask.tool_calls.length > 0 && (
+              <div className="p-4 rounded-xl bg-iron-panelSecondary border border-iron-border space-y-3 text-xs font-mono">
+                <div
+                  onClick={() => setShowToolTrace(!showToolTrace)}
+                  className="flex items-center justify-between cursor-pointer select-none pb-1"
+                >
+                  <div className="flex items-center gap-2 font-bold text-iron-textPrimary">
+                    <Terminal className="w-4 h-4 text-iron-accentPrimary" />
+                    <span className="uppercase tracking-wider">
+                      Real Tool Execution Trace & Ledger ({activeTask.tool_calls.length} Tools Executed)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-iron-textSecondary hover:text-iron-textPrimary transition">
+                    <span className="text-[11px]">{showToolTrace ? "Collapse Trace" : "Expand Tool Trace"}</span>
+                    {showToolTrace ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </div>
+                </div>
+
+                {showToolTrace && (
+                  <div className="space-y-2.5 pt-2 border-t border-iron-border/60">
+                    {activeTask.tool_calls.map((tool: ToolCallItem, idx: number) => {
+                      const isExpanded = expandedToolIdx === idx;
+                      return (
+                        <div
+                          key={idx}
+                          className="rounded-lg bg-[#060A14] border border-iron-border overflow-hidden transition"
+                        >
+                          <div
+                            onClick={() => setExpandedToolIdx(isExpanded ? null : idx)}
+                            className="p-2.5 flex items-center justify-between cursor-pointer hover:bg-iron-panel/40 transition gap-2"
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="font-bold text-iron-accentPrimary text-xs">{tool.tool_name}</span>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                                  tool.success
+                                    ? "bg-iron-success/15 text-iron-success border border-iron-success/30"
+                                    : "bg-iron-error/15 text-iron-error border border-iron-error/30"
+                                }`}
+                              >
+                                {tool.success ? "SUCCESS" : "FAILED"}
+                              </span>
+                              {tool.latency_ms && (
+                                <span className="text-[10px] text-iron-textSecondary">
+                                  • {tool.latency_ms.toFixed(1)} ms
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 text-iron-textSecondary">
+                              <span className="text-[10px]">
+                                {tool.called_at ? new Date(tool.called_at).toLocaleTimeString() : ""}
+                              </span>
+                              {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="p-3 bg-black/50 border-t border-iron-border space-y-2 text-[11px]">
+                              {tool.arguments && Object.keys(tool.arguments).length > 0 && (
+                                <div>
+                                  <div className="text-[10px] text-iron-accentPrimary uppercase font-bold mb-1">
+                                    Arguments
+                                  </div>
+                                  <pre className="p-2 rounded bg-iron-panel/60 border border-iron-border/40 text-iron-textSecondary overflow-x-auto text-[10px]">
+                                    {JSON.stringify(tool.arguments, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+
+                              {tool.output && (
+                                <div>
+                                  <div className="text-[10px] text-iron-success uppercase font-bold mb-1">
+                                    Tool Output
+                                  </div>
+                                  <pre className="p-2 rounded bg-iron-panel/60 border border-iron-border/40 text-iron-textPrimary overflow-x-auto text-[10px]">
+                                    {typeof tool.output === "string"
+                                      ? tool.output
+                                      : JSON.stringify(tool.output, null, 2)}
+                                  </pre>
+                                </div>
+                              )}
+
+                              {tool.error && (
+                                <div className="text-iron-error text-[10px] pt-1">
+                                  <strong>Error:</strong> {tool.error}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1551,9 +2087,13 @@ export default function WorkbenchPage() {
                   <p className="text-[11px] text-iron-textSecondary line-clamp-1">{m.description}</p>
 
                   <div className="flex items-center justify-between text-[10px] font-mono text-iron-textSecondary pt-1 border-t border-iron-border/60">
-                    <span>Memory / VRAM:</span>
+                    <span>Memory:</span>
                     <span className={isWarm ? "text-iron-success font-bold" : "text-iron-textSecondary"}>
-                      {isWarm ? `${m.vram_usage_mb || "4,500"} MB VRAM` : "Inactive"}
+                      {isWarm
+                        ? m.role === "routing" || m.id.includes("0.6b")
+                          ? "450 MB RAM (CPU)"
+                          : `${m.vram_usage_mb || "4,500"} MB VRAM (GPU)`
+                        : "Inactive"}
                     </span>
                   </div>
                 </div>
@@ -1585,7 +2125,7 @@ export default function WorkbenchPage() {
                       ) : (
                         <Zap className="w-3.5 h-3.5" />
                       )}
-                      <span>Load Warm in VRAM</span>
+                      <span>Load Warm in Memory</span>
                     </button>
                   )}
                 </div>

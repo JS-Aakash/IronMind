@@ -94,10 +94,17 @@ class OllamaProvider(ModelProvider):
             "model": model,
             "prompt": prompt,
             "stream": False,
+            "keep_alive": -1,
             "options": {
                 "temperature": temperature,
             },
         }
+
+        if "0.6b" in model.lower():
+            payload["options"]["num_gpu"] = 0
+            payload["options"]["num_ctx"] = 2048
+        else:
+            payload["options"].setdefault("num_ctx", 2048)
 
         if system_prompt:
             payload["system"] = system_prompt
@@ -308,6 +315,14 @@ class OllamaProvider(ModelProvider):
         if max_tokens:
             payload["options"]["num_predict"] = max_tokens
 
+        images = kwargs.get("images") or kwargs.get("image_base64")
+        if images:
+            if isinstance(images, str):
+                images = [images]
+            encoded_images = [self._encode_image(img) for img in images if img]
+            if encoded_images:
+                payload["images"] = encoded_images
+
         accumulated_len = 0
         try:
             async with httpx.AsyncClient(timeout=self._timeout_config) as client:
@@ -323,6 +338,8 @@ class OllamaProvider(ModelProvider):
                         try:
                             chunk_data = json.loads(line)
                             chunk_text = chunk_data.get("response", "")
+                            if not chunk_text and chunk_data.get("thinking"):
+                                chunk_text = chunk_data.get("thinking", "")
                             is_done = chunk_data.get("done", False)
                             accumulated_len += len(chunk_text)
                             yield StreamChunk(

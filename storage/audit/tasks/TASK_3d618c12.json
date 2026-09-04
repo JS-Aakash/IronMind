@@ -1,0 +1,270 @@
+{
+  "task_id": "TASK_3d618c12",
+  "user": "local_operator",
+  "task_goal": "Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX.",
+  "task_classification": "document_analysis",
+  "models_selected": [
+    "qwen2.5vl:7b",
+    "qwen3:8b"
+  ],
+  "model_calls_count": 1,
+  "total_tokens": 456,
+  "tool_calls_count": 2,
+  "retrieved_documents": [
+    "Local Knowledge Document",
+    "Local Knowledge Document",
+    "Local Knowledge Document"
+  ],
+  "source_citations": [
+    {
+      "finding": "Artifact 'MRPL_Approval_Note_P_101_20260904_111407.docx' verified with SHA-256 signature: 5211e529be7a... (DOCX)"
+    },
+    {
+      "finding": "Captured 4 grounded observations across workflow steps."
+    },
+    {
+      "finding": "Formal Microsoft Word (.docx) approval note deliverable successfully validated."
+    }
+  ],
+  "sandbox_executions_count": 0,
+  "generated_artifacts": [
+    {
+      "artifact_id": "ART_a7cd937b",
+      "task_id": "TASK_3d618c12",
+      "filename": "MRPL_Approval_Note_P_101_20260904_111407.docx",
+      "type": "docx",
+      "created_at": "2026-09-04T11:14:07.714613",
+      "source_documents": [
+        "inspection_report.pdf",
+        "MRPL_SOP_P101.pdf"
+      ],
+      "models_used": [
+        "qwen2.5vl:7b",
+        "qwen3:8b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "5211e529be7a24716e8774f2295ed7e3d72383e548a65b9ff179af0b99bac1d6",
+      "size_bytes": 38002,
+      "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260904_111407.docx",
+      "download_url": "/api/v1/artifacts/ART_a7cd937b/download",
+      "metadata": {
+        "equipment_tag": "P-101",
+        "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+      }
+    }
+  ],
+  "errors": [],
+  "completion_status": "completed",
+  "created_at": "2026-09-04T11:13:59.757622",
+  "completed_at": "2026-09-04T11:14:07.733560",
+  "duration_ms": 7978.356,
+  "events": [
+    {
+      "event_id": "EVT_c799dc59",
+      "task_id": "TASK_3d618c12",
+      "event_type": "TASK_CREATED",
+      "timestamp": "2026-09-04T11:13:59.757622",
+      "source_service": "Agent Orchestrator",
+      "actor": "local_operator",
+      "duration_ms": null,
+      "details": {
+        "goal": "Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX.",
+        "task_type": "document_analysis"
+      }
+    },
+    {
+      "event_id": "EVT_190b1638",
+      "task_id": "TASK_3d618c12",
+      "event_type": "TASK_CLASSIFIED",
+      "timestamp": "2026-09-04T11:14:07.317319",
+      "source_service": "Model Router",
+      "actor": "qwen3:0.6b",
+      "duration_ms": null,
+      "details": {
+        "task_type": "document_analysis",
+        "required_capabilities": [
+          "ocr",
+          "multimodal",
+          "vision",
+          "artifact_generation",
+          "reasoning",
+          "planning"
+        ],
+        "goal": "Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX."
+      }
+    },
+    {
+      "event_id": "EVT_fcbf93fc",
+      "task_id": "TASK_3d618c12",
+      "event_type": "MODEL_SELECTED",
+      "timestamp": "2026-09-04T11:14:07.323136",
+      "source_service": "Model Router",
+      "actor": "router_engine",
+      "duration_ms": null,
+      "details": {
+        "primary_model": "qwen2.5vl:7b",
+        "stages": {
+          "vision": "qwen2.5vl:7b",
+          "reasoning": "qwen3:8b"
+        },
+        "reason": "Vision capability required: Routed to qwen2.5vl:7b for visual document/drawing understanding.",
+        "goal": "Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX."
+      }
+    },
+    {
+      "event_id": "EVT_d44eb3af",
+      "task_id": "TASK_3d618c12",
+      "event_type": "TOOL_CALLED",
+      "timestamp": "2026-09-04T11:14:07.344964",
+      "source_service": "Tool System",
+      "actor": "qwen2.5vl:7b",
+      "duration_ms": null,
+      "details": {
+        "tool_name": "document.ocr_parse",
+        "step": "Multimodal OCR & Inspection Parsing"
+      }
+    },
+    {
+      "event_id": "EVT_3c53759e",
+      "task_id": "TASK_3d618c12",
+      "event_type": "RAG_RETRIEVAL",
+      "timestamp": "2026-09-04T11:14:07.362952",
+      "source_service": "RAG Engine",
+      "actor": "qwen3:8b",
+      "duration_ms": null,
+      "details": {
+        "query": "vibration velocity thresholds pump P-101 SOP Section 4.2",
+        "matched_docs": [
+          "Local Knowledge Document",
+          "Local Knowledge Document",
+          "Local Knowledge Document"
+        ],
+        "top_k": 3
+      }
+    },
+    {
+      "event_id": "EVT_cafe3082",
+      "task_id": "TASK_3d618c12",
+      "event_type": "MODEL_INFERENCE",
+      "timestamp": "2026-09-04T11:14:07.488727",
+      "source_service": "Model Gateway",
+      "actor": "qwen3:8b",
+      "duration_ms": null,
+      "details": {
+        "model": "qwen3:8b",
+        "prompt_tokens": 450,
+        "completion_tokens": 6,
+        "step": "Reconcile Findings & SOP Evidence Synthesis"
+      }
+    },
+    {
+      "event_id": "EVT_ea4df14b",
+      "task_id": "TASK_3d618c12",
+      "event_type": "ARTIFACT_CREATED",
+      "timestamp": "2026-09-04T11:14:07.722606",
+      "source_service": "Artifact Engine",
+      "actor": "docx_generator",
+      "duration_ms": null,
+      "details": {
+        "artifact_id": "ART_a7cd937b",
+        "task_id": "TASK_3d618c12",
+        "filename": "MRPL_Approval_Note_P_101_20260904_111407.docx",
+        "type": "docx",
+        "created_at": "2026-09-04T11:14:07.714613",
+        "source_documents": [
+          "inspection_report.pdf",
+          "MRPL_SOP_P101.pdf"
+        ],
+        "models_used": [
+          "qwen2.5vl:7b",
+          "qwen3:8b"
+        ],
+        "verification_status": "verified",
+        "verified": true,
+        "sha256_hash": "5211e529be7a24716e8774f2295ed7e3d72383e548a65b9ff179af0b99bac1d6",
+        "size_bytes": 38002,
+        "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260904_111407.docx",
+        "download_url": "/api/v1/artifacts/ART_a7cd937b/download",
+        "metadata": {
+          "equipment_tag": "P-101",
+          "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+        }
+      }
+    },
+    {
+      "event_id": "EVT_e5803000",
+      "task_id": "TASK_3d618c12",
+      "event_type": "TOOL_CALLED",
+      "timestamp": "2026-09-04T11:14:07.725596",
+      "source_service": "Tool System",
+      "actor": "qwen3:8b",
+      "duration_ms": null,
+      "details": {
+        "tool_name": "artifact.generate_docx",
+        "step": "Generate Official MRPL Approval Note (DOCX)"
+      }
+    },
+    {
+      "event_id": "EVT_590b6593",
+      "task_id": "TASK_3d618c12",
+      "event_type": "VERIFICATION",
+      "timestamp": "2026-09-04T11:14:07.729513",
+      "source_service": "Agent Verifier",
+      "actor": "agent_orchestrator",
+      "duration_ms": null,
+      "details": {
+        "verification_passed": true,
+        "checks": [
+          "Artifact 'MRPL_Approval_Note_P_101_20260904_111407.docx' verified with SHA-256 signature: 5211e529be7a... (DOCX)",
+          "Captured 4 grounded observations across workflow steps.",
+          "Formal Microsoft Word (.docx) approval note deliverable successfully validated."
+        ],
+        "recommendation": "Execution validated. Deliverable confirmed.",
+        "primary_model": "qwen2.5vl:7b"
+      }
+    },
+    {
+      "event_id": "EVT_ecf0af40",
+      "task_id": "TASK_3d618c12",
+      "event_type": "TASK_COMPLETED",
+      "timestamp": "2026-09-04T11:14:07.733560",
+      "source_service": "Agent Orchestrator",
+      "actor": "agent_orchestrator",
+      "duration_ms": 7978.356,
+      "details": {
+        "completion_status": "completed",
+        "artifacts_count": 1,
+        "primary_model": "qwen2.5vl:7b",
+        "goal": "Analyze scanned inspection report for pump P-101 and draft Approval Note DOCX.",
+        "artifacts": [
+          {
+            "artifact_id": "ART_a7cd937b",
+            "task_id": "TASK_3d618c12",
+            "filename": "MRPL_Approval_Note_P_101_20260904_111407.docx",
+            "type": "docx",
+            "created_at": "2026-09-04T11:14:07.714613",
+            "source_documents": [
+              "inspection_report.pdf",
+              "MRPL_SOP_P101.pdf"
+            ],
+            "models_used": [
+              "qwen2.5vl:7b",
+              "qwen3:8b"
+            ],
+            "verification_status": "verified",
+            "verified": true,
+            "sha256_hash": "5211e529be7a24716e8774f2295ed7e3d72383e548a65b9ff179af0b99bac1d6",
+            "size_bytes": 38002,
+            "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260904_111407.docx",
+            "download_url": "/api/v1/artifacts/ART_a7cd937b/download",
+            "metadata": {
+              "equipment_tag": "P-101",
+              "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
