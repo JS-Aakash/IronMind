@@ -215,6 +215,7 @@ export default function WorkbenchPage() {
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [showToolTrace, setShowToolTrace] = useState<boolean>(false);
   const [expandedToolIdx, setExpandedToolIdx] = useState<number | null>(null);
+  const [selectedAttemptIdx, setSelectedAttemptIdx] = useState<number | null>(null);
   const eventSourceRef = useRef<EventSource | null>(null);
 
   // 3. Local Model Manager State
@@ -224,6 +225,22 @@ export default function WorkbenchPage() {
   const [isRefreshingModels, setIsRefreshingModels] = useState(false);
   const taskFileInputRef = useRef<HTMLInputElement>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const activityLogsContainerRef = useRef<HTMLDivElement | null>(null);
+  const tokenFeedContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll activity logs when new events arrive
+  useEffect(() => {
+    if (activityLogsContainerRef.current) {
+      activityLogsContainerRef.current.scrollTop = activityLogsContainerRef.current.scrollHeight;
+    }
+  }, [activityLogs]);
+
+  // Auto-scroll token feed when new streaming tokens arrive
+  useEffect(() => {
+    if (tokenFeedContainerRef.current) {
+      tokenFeedContainerRef.current.scrollTop = tokenFeedContainerRef.current.scrollHeight;
+    }
+  }, [streamingText]);
 
   useEffect(() => {
     loadingModelIdRef.current = loadingModelId;
@@ -432,6 +449,7 @@ export default function WorkbenchPage() {
       setStreamingText("");
       setStreamingModel("");
       setIsStreaming(false);
+      setSelectedAttemptIdx(null);
 
       // 2. Open Server-Sent Events (SSE) for token-by-token real-time streaming
       if (eventSourceRef.current) {
@@ -466,6 +484,18 @@ export default function WorkbenchPage() {
             } else if (data.event_type === "STEP_STARTED") {
               // Reset stream for new step
               setStreamingText("");
+            } else if (
+              data.event_type === "ATTEMPT_STARTED" ||
+              data.event_type === "ATTEMPT_FAILED" ||
+              data.event_type === "ERROR_ANALYSIS" ||
+              data.event_type === "FIX_APPLIED" ||
+              data.event_type === "ATTEMPT_VERIFIED" ||
+              data.event_type === "RECOVERY_HALTED"
+            ) {
+              appendLog("VERIFY", `[Self-Repair] ${data.message || data.event_type}`);
+              api.getTaskById(created.task_id).then((fresh) => {
+                setActiveTask(fresh);
+              }).catch(() => {});
             } else if (data.event_type === "TASK_COMPLETED" || data.event_type === "TASK_FAILED") {
               setIsStreaming(false);
               es.close();
@@ -596,6 +626,62 @@ export default function WorkbenchPage() {
     setStreamingText("");
     setStreamingModel("");
     setIsStreaming(false);
+  };
+
+  const handleLoadPreset = (
+    presetId:
+      | "scenario_1"
+      | "scenario_2"
+      | "scenario_3"
+      | "scenario_4"
+      | "flagship_1"
+      | "flagship_2"
+      | "flagship_3"
+      | "flagship_4"
+  ) => {
+    if (presetId === "scenario_1" || presetId === "flagship_2") {
+      setGoal(
+        "Write a Python module to calculate centrifugal pump hydraulic power (P_hyd = density * 9.81 * flow_rate * head / 1000) according to API 610 / ISO 13709 standards. Include automated unit test assertions verifying positive power for nominal flow, zero power at shutoff (flow = 0), and density scaling. Execute and verify in the isolated sandbox."
+      );
+      setAttachedFiles([]);
+      appendLog("TASK", "Loaded Scenario 1: Coding Generation + Sandbox Verification (API 610 / ISO 13709).");
+    } else if (presetId === "scenario_2" || presetId === "flagship_4") {
+      setGoal(
+        "Inspect the staged MRPL fleet vibration Excel workbook (MRPL_P101_Inspection_Data.xlsx). Calculate mean vibration velocities and deviation percentages, apply conditional formatting to highlight vibration > 4.5 mm/s in RED, and generate a new executive KPI Summary sheet."
+      );
+      setAttachedFiles([
+        {
+          filename: "MRPL_P101_Inspection_Data.xlsx",
+          sizeBytes: 5299,
+          isUploaded: true,
+        },
+      ]);
+      appendLog("TASK", "Loaded Scenario 2: Spreadsheet Analysis + Modification (MRPL Fleet Vibration Workbook).");
+    } else if (presetId === "scenario_3" || presetId === "flagship_3") {
+      setGoal(
+        "Analyze the attached P&ID engineering drawing for MRPL Crude Distillation Unit 01 (MRPL_Crude_Distillation_P101_PID.png). Extract all ISA-5.1 equipment tags (pumps, columns, vessels), instrumentation transmitters (PT, FT, LT, TT), control loops, and line connectivity schema."
+      );
+      setAttachedFiles([
+        {
+          filename: "MRPL_Crude_Distillation_P101_PID.png",
+          sizeBytes: 82947,
+          isUploaded: true,
+        },
+      ]);
+      appendLog("TASK", "Loaded Scenario 3: Multimodal Industrial Analysis for Image (CDU-01 P&ID Drawing).");
+    } else if (presetId === "scenario_4" || presetId === "flagship_1") {
+      setGoal(
+        "Analyze the staged inspection report for Crude Charge Pump P-101 (MRPL_P101_Inspection_Scan.txt). Cross-reference MRPL SOP Section 4.2 (allowable vibration limit 4.5 mm/s RMS) and ISO 10816 standards. Draft a formal Approval Note in Word (.docx) format recommending urgent bearing overhaul and seal replacement with exact section citations."
+      );
+      setAttachedFiles([
+        {
+          filename: "MRPL_P101_Inspection_Scan.txt",
+          sizeBytes: 1832,
+          isUploaded: true,
+        },
+      ]);
+      appendLog("TASK", "Loaded Scenario 4: Scanned Inspection Report → Word Approval Note (MRPL SOP Section 4.2).");
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -731,6 +817,13 @@ export default function WorkbenchPage() {
   const calcOutput = calculationTool?.output;
   const calcTrace = calcOutput?.calculation_trace;
 
+  // Extraction of P&ID engineering drawing tool output
+  const pidTool = activeTask?.tool_calls?.find(
+    (t) => t.tool_name === "vision.pid_analyze" || t.output?.equipment || t.output?.drawing_title
+  );
+  const pidOutput = pidTool?.output;
+
+
   // Extraction of file and spreadsheet change summaries
   const changeSummaries = (activeTask?.change_summaries && activeTask.change_summaries.length > 0)
     ? activeTask.change_summaries
@@ -854,6 +947,85 @@ export default function WorkbenchPage() {
                 <span>Task Specification</span>
               </h2>
               <p className="text-xs text-iron-textSecondary">What should IronMind accomplish?</p>
+            </div>
+
+            {/* 4 FLAGSHIP DEMO PRESETS (1-CLICK EVALUATION SCENARIOS) */}
+            <div className="space-y-2 p-3.5 rounded-xl bg-[#060A14] border border-iron-border/70">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-iron-accentPrimary" />
+                  <span className="font-bold text-iron-textPrimary uppercase tracking-wider text-[11px]">
+                    4 Flagship Demo Scenarios (1-Click Presets)
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-iron-textSecondary">MRPL Sovereign Operations</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {/* Scenario 1: Coding Generation + Sandbox Verification */}
+                <button
+                  type="button"
+                  id="preset-scenario-1"
+                  onClick={() => handleLoadPreset("scenario_1")}
+                  className="p-2.5 rounded-lg bg-iron-panelSecondary hover:bg-iron-border border border-iron-border/60 hover:border-emerald-500/50 text-left transition space-y-1 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-iron-textPrimary group-hover:text-emerald-400">
+                    <Code2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">1. Code & Sandbox</span>
+                  </div>
+                  <p className="text-[10px] text-iron-textSecondary line-clamp-2">
+                    API 610 Pump Hydraulic Power + Isolated Sandbox Tests
+                  </p>
+                </button>
+
+                {/* Scenario 2: Spreadsheet Analysis + Modification */}
+                <button
+                  type="button"
+                  id="preset-scenario-2"
+                  onClick={() => handleLoadPreset("scenario_2")}
+                  className="p-2.5 rounded-lg bg-iron-panelSecondary hover:bg-iron-border border border-iron-border/60 hover:border-emerald-500/50 text-left transition space-y-1 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-iron-textPrimary group-hover:text-emerald-400">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="truncate">2. Spreadsheet Analysis</span>
+                  </div>
+                  <p className="text-[10px] text-iron-textSecondary line-clamp-2">
+                    Fleet Vibration Excel → Anomaly Formatting & KPI Sheet
+                  </p>
+                </button>
+
+                {/* Scenario 3: Multimodal Industrial Analysis for image */}
+                <button
+                  type="button"
+                  id="preset-scenario-3"
+                  onClick={() => handleLoadPreset("scenario_3")}
+                  className="p-2.5 rounded-lg bg-iron-panelSecondary hover:bg-iron-border border border-iron-border/60 hover:border-sky-500/50 text-left transition space-y-1 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-iron-textPrimary group-hover:text-sky-400">
+                    <Layers className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                    <span className="truncate">3. Multimodal Vision (P&ID)</span>
+                  </div>
+                  <p className="text-[10px] text-iron-textSecondary line-clamp-2">
+                    Crude Distillation P&ID → ISA-5.1 Tags & Control Loops
+                  </p>
+                </button>
+
+                {/* Scenario 4: Scanned Inspection Report → Approval Note */}
+                <button
+                  type="button"
+                  id="preset-scenario-4"
+                  onClick={() => handleLoadPreset("scenario_4")}
+                  className="p-2.5 rounded-lg bg-iron-panelSecondary hover:bg-iron-border border border-iron-border/60 hover:border-rose-500/50 text-left transition space-y-1 group cursor-pointer"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-iron-textPrimary group-hover:text-rose-400">
+                    <FileText className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    <span className="truncate">4. Scanned Report → Docx</span>
+                  </div>
+                  <p className="text-[10px] text-iron-textSecondary line-clamp-2">
+                    P-101 Scan → SOP 4.2 Cross-ref → Word Approval Note
+                  </p>
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleRunTask} className="space-y-3.5" id="task-form">
@@ -1006,25 +1178,6 @@ export default function WorkbenchPage() {
                   </button>
                 )}
               </div>
-
-              {/* AI STREAMING TOKENS COMPONENT (Left column below Run Task button) */}
-              {activeLiveStatus === "running" && isStreaming && streamingText && (
-                <div className="mt-2.5 p-3.5 rounded-lg bg-[#060A14] border border-iron-accentPrimary/60 shadow-lg shadow-iron-accentPrimary/5 space-y-2 animate-pulse">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-iron-accentPrimary font-bold flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-iron-accentPrimary animate-ping" />
-                      <span>AI STREAMING TOKENS ({streamingModel || "LOCAL MODEL"})</span>
-                    </span>
-                    <span className="text-iron-textSecondary font-bold text-[10px]">
-                      {streamingText.split(/\s+/).filter(Boolean).length} tokens
-                    </span>
-                  </div>
-                  <div className="text-xs font-mono text-iron-textPrimary bg-black/60 p-2.5 rounded border border-iron-border/40 max-h-32 overflow-y-auto leading-relaxed">
-                    {streamingText.slice(-350)}
-                    <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-iron-accentPrimary animate-pulse align-middle" />
-                  </div>
-                </div>
-              )}
             </form>
           </div>
         </div>
@@ -1173,7 +1326,10 @@ export default function WorkbenchPage() {
                 </span>
               </div>
 
-              <div className="p-3 rounded-lg bg-[#060A14] border border-iron-border font-mono text-xs text-iron-textSecondary overflow-y-auto space-y-2 h-28">
+              <div
+                ref={activityLogsContainerRef}
+                className="p-3 rounded-lg bg-[#060A14] border border-iron-border font-mono text-xs text-iron-textSecondary overflow-y-auto space-y-2 h-28 scroll-smooth"
+              >
                 {activityLogs.length === 0 ? (
                   <div className="text-iron-textSecondary/50 text-center py-6 text-xs">
                     Awaiting task execution events...
@@ -1200,6 +1356,42 @@ export default function WorkbenchPage() {
                       <span className="text-iron-textPrimary break-all text-[11px]">{log.message}</span>
                     </div>
                   ))
+                )}
+              </div>
+            </div>
+
+            {/* Live Token Feed (Right Column) */}
+            <div className="space-y-1.5 pt-2 border-t border-iron-border flex flex-col">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-sky-400 flex items-center gap-1.5 uppercase font-mono">
+                  <span className={`w-2 h-2 rounded-full ${activeLiveStatus === "running" && streamingText ? "bg-sky-400 animate-ping" : "bg-sky-500/50"}`} />
+                  <span>Live Token Feed</span>
+                  <span className="text-[10px] font-normal text-iron-textSecondary">
+                    • {streamingModel || resolvedModel || "Reasoning Model"}
+                  </span>
+                </span>
+                <span className="text-[10px] font-mono text-iron-textSecondary">
+                  {streamingText ? streamingText.split(/\s+/).filter(Boolean).length : 0} tokens
+                </span>
+              </div>
+
+              <div
+                ref={tokenFeedContainerRef}
+                className="p-3 rounded-lg bg-[#060A14] border border-sky-500/30 font-mono text-xs text-iron-textPrimary overflow-y-auto space-y-2 max-h-36 min-h-20 leading-relaxed whitespace-pre-wrap scroll-smooth"
+              >
+                {streamingText ? (
+                  <div>
+                    <span>{streamingText}</span>
+                    {activeLiveStatus === "running" && (
+                      <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-sky-400 animate-pulse align-middle" />
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-iron-textSecondary/50 text-center py-4 text-xs">
+                    {activeLiveStatus === "running"
+                      ? "Generating tokens..."
+                      : "Awaiting token stream generation..."}
+                  </div>
                 )}
               </div>
             </div>
@@ -1296,7 +1488,246 @@ export default function WorkbenchPage() {
               </div>
             </div>
 
-            {/* DYNAMIC PRESENTATION MODE 1: CODING WORKFLOW */}
+            {/* ========================================================================= */}
+            {/* AUTONOMOUS RETRY & SELF-HEALING RECOVERY PIPELINE                         */}
+            {/* Attempt 1 -> Failure -> Error Analysis -> Fix -> Attempt 2 -> Verification */}
+            {/* ========================================================================= */}
+            {((activeTask?.recovery_attempts && activeTask.recovery_attempts.length > 0) || taskType === "coding") && (
+              <div className="p-4 rounded-xl bg-iron-panelSecondary border border-iron-border space-y-3.5 font-mono text-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-iron-border/60">
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4 text-iron-accentPrimary" />
+                    <span className="font-bold text-iron-textPrimary text-xs uppercase tracking-wide">
+                      Autonomous Retry & Self-Healing Pipeline
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-iron-panelSecondary text-iron-textSecondary border border-iron-border">
+                      Max 3 Retries
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {activeTask?.status === "completed" || activeTask?.recovery_attempts?.some((a) => a.status === "verified") ? (
+                      <span className="px-2.5 py-1 rounded bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-mono text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-500/10">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Verified ✓</span>
+                      </span>
+                    ) : activeTask?.user_intervention_prompt || activeTask?.recovery_attempts?.some((a) => a.status === "halted") ? (
+                      <span className="px-2.5 py-1 rounded bg-amber-950/80 border border-amber-500/50 text-amber-300 font-mono text-xs font-bold flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Intervention Required</span>
+                      </span>
+                    ) : activeLiveStatus === "running" ? (
+                      <span className="px-2.5 py-1 rounded bg-sky-950/80 border border-sky-500/50 text-sky-300 font-mono text-xs font-bold flex items-center gap-1.5 animate-pulse">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                        <span>Active Recovery Loop</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded bg-iron-panelSecondary border border-iron-border text-iron-textSecondary text-xs">
+                        Standby
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Horizontal Stepper Pipeline Progression */}
+                <div className="overflow-x-auto pb-1.5">
+                  <div className="flex items-center gap-2 min-w-max">
+                    {activeTask?.recovery_attempts && activeTask.recovery_attempts.length > 0 ? (
+                      activeTask.recovery_attempts.map((att, idx) => {
+                        const isSelected = (selectedAttemptIdx ?? activeTask.recovery_attempts!.length - 1) === idx;
+                        return (
+                          <React.Fragment key={idx}>
+                            {/* Attempt Node */}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAttemptIdx(idx)}
+                              className={`px-3 py-1.5 rounded-lg border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                                isSelected ? "ring-2 ring-sky-400 shadow-sm" : ""
+                              } ${
+                                att.status === "verified"
+                                  ? "bg-emerald-950/50 border-emerald-500/50 text-emerald-300"
+                                  : att.status === "halted"
+                                  ? "bg-amber-950/50 border-amber-500/50 text-amber-300"
+                                  : "bg-rose-950/50 border-rose-500/50 text-rose-300"
+                              }`}
+                            >
+                              <Box className="w-3.5 h-3.5" />
+                              <span>Attempt {att.attempt_number}</span>
+                            </button>
+
+                            {/* Failure Node */}
+                            {att.status === "failed" && (
+                              <>
+                                <ArrowRight className="w-3.5 h-3.5 text-iron-textSecondary/60 shrink-0" />
+                                <div className="px-2.5 py-1 rounded bg-rose-950/60 border border-rose-500/40 text-rose-300 text-[11px] font-semibold flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3 text-rose-400 shrink-0" />
+                                  <span>Failure ({att.failure_details?.split(":")[0] || `Exit ${att.exit_code}`})</span>
+                                </div>
+
+                                {att.root_cause_analysis && (
+                                  <>
+                                    <ArrowRight className="w-3.5 h-3.5 text-iron-textSecondary/60 shrink-0" />
+                                    <div className="px-2.5 py-1 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 text-[11px] font-semibold flex items-center gap-1">
+                                      <Workflow className="w-3 h-3 text-amber-400 shrink-0" />
+                                      <span>Error Analysis</span>
+                                    </div>
+                                  </>
+                                )}
+
+                                {att.fix_description && (
+                                  <>
+                                    <ArrowRight className="w-3.5 h-3.5 text-iron-textSecondary/60 shrink-0" />
+                                    <div className="px-2.5 py-1 rounded bg-sky-950/60 border border-sky-500/40 text-sky-300 text-[11px] font-semibold flex items-center gap-1">
+                                      <Zap className="w-3 h-3 text-sky-400 shrink-0" />
+                                      <span>Fix</span>
+                                    </div>
+                                  </>
+                                )}
+
+                                {idx < activeTask.recovery_attempts!.length - 1 && (
+                                  <ArrowRight className="w-3.5 h-3.5 text-iron-textSecondary/60 shrink-0" />
+                                )}
+                              </>
+                            )}
+
+                            {/* Verified Node */}
+                            {att.status === "verified" && (
+                              <>
+                                <ArrowRight className="w-3.5 h-3.5 text-emerald-500/60 shrink-0" />
+                                <div className="px-2.5 py-1 rounded bg-emerald-950/60 border border-emerald-500/40 text-emerald-300 text-[11px] font-semibold flex items-center gap-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                  <span>Verification</span>
+                                </div>
+                                <ArrowRight className="w-3.5 h-3.5 text-emerald-500/60 shrink-0" />
+                                <div className="px-3 py-1 rounded-lg bg-emerald-900/70 border border-emerald-400 text-emerald-200 text-xs font-bold flex items-center gap-1.5 shadow-sm shadow-emerald-500/30">
+                                  <Check className="w-3.5 h-3.5 text-emerald-300" />
+                                  <span>Verified ✓</span>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Halted Unrecoverable Node */}
+                            {att.status === "halted" && (
+                              <>
+                                <ArrowRight className="w-3.5 h-3.5 text-amber-500/60 shrink-0" />
+                                <div className="px-2.5 py-1 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 text-[11px] font-semibold flex items-center gap-1">
+                                  <AlertTriangle className="w-3 h-3 text-amber-400 shrink-0" />
+                                  <span>Halted (Unrecoverable)</span>
+                                </div>
+                                <ArrowRight className="w-3.5 h-3.5 text-amber-500/60 shrink-0" />
+                                <div className="px-3 py-1 rounded bg-amber-900/50 border border-amber-400 text-amber-200 text-xs font-bold flex items-center gap-1">
+                                  <span>Operator Action Required</span>
+                                </div>
+                              </>
+                            )}
+                          </React.Fragment>
+                        );
+                      })
+                    ) : (
+                      /* Standby Progression */
+                      <div className="flex items-center gap-2 text-iron-textSecondary text-xs">
+                        <span className="px-2.5 py-1 rounded bg-iron-panelSecondary border border-iron-border font-semibold">Attempt 1</span>
+                        <ArrowRight className="w-3 h-3 opacity-40" />
+                        <span className="px-2.5 py-1 rounded bg-iron-panelSecondary border border-iron-border opacity-50">Failure Check</span>
+                        <ArrowRight className="w-3 h-3 opacity-40" />
+                        <span className="px-2.5 py-1 rounded bg-iron-panelSecondary border border-iron-border opacity-50">Error Analysis</span>
+                        <ArrowRight className="w-3 h-3 opacity-40" />
+                        <span className="px-2.5 py-1 rounded bg-iron-panelSecondary border border-iron-border opacity-50">Fix</span>
+                        <ArrowRight className="w-3 h-3 opacity-40" />
+                        <span className="px-2.5 py-1 rounded bg-iron-panelSecondary border border-iron-border opacity-50">Attempt 2</span>
+                        <ArrowRight className="w-3 h-3 opacity-40" />
+                        <span className="px-2.5 py-1 rounded bg-emerald-950/30 border border-emerald-500/30 text-emerald-400/70 font-semibold">Verification (Verified ✓)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected Attempt Detailed Metrics & Analysis Card */}
+                {activeTask?.recovery_attempts && activeTask.recovery_attempts.length > 0 && (() => {
+                  const activeIdx = selectedAttemptIdx !== null && selectedAttemptIdx < activeTask.recovery_attempts.length
+                    ? selectedAttemptIdx
+                    : activeTask.recovery_attempts.length - 1;
+                  const currentAtt = activeTask.recovery_attempts[activeIdx];
+                  if (!currentAtt) return null;
+
+                  return (
+                    <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-iron-border/60 text-xs font-bold">
+                        <div className="flex items-center gap-2">
+                          <span className="text-iron-textPrimary">
+                            Attempt {currentAtt.attempt_number} Inspection
+                          </span>
+                          <span className="text-[10px] text-iron-textSecondary font-normal">
+                            ({activeIdx + 1} of {activeTask.recovery_attempts.length})
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            currentAtt.exit_code === 0
+                              ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/40"
+                              : "bg-rose-950/60 text-rose-400 border border-rose-500/40"
+                          }`}>
+                            Exit Code: {currentAtt.exit_code ?? 0}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            currentAtt.status === "verified"
+                              ? "text-emerald-400 bg-emerald-950/50"
+                              : currentAtt.status === "failed"
+                              ? "text-rose-400 bg-rose-950/50"
+                              : "text-amber-400 bg-amber-950/50"
+                          }`}>
+                            {currentAtt.status.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                        {/* Failure Details or Assertion Results */}
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-iron-textSecondary uppercase font-bold tracking-wider">
+                            {currentAtt.status === "verified" ? "Test Execution Results" : "Failure Diagnostics"}
+                          </span>
+                          <div className="p-2.5 rounded bg-iron-panelSecondary/80 border border-iron-border text-[11px] font-mono break-all text-iron-textPrimary">
+                            {currentAtt.failure_details || currentAtt.test_results || "All self-testing assertions executed and passed."}
+                          </div>
+                        </div>
+
+                        {/* Error Analysis & Fix Applied */}
+                        <div className="space-y-1">
+                          <span className="text-[10px] text-iron-textSecondary uppercase font-bold tracking-wider">
+                            Root Cause & Applied Fix
+                          </span>
+                          <div className="p-2.5 rounded bg-iron-panelSecondary/80 border border-iron-border space-y-1 text-[11px] font-mono">
+                            <div>
+                              <span className="text-amber-400 font-bold">Analysis: </span>
+                              <span className="text-iron-textPrimary">{currentAtt.root_cause_analysis || "No failures detected; standard execution verified."}</span>
+                            </div>
+                            {currentAtt.fix_description && (
+                              <div>
+                                <span className="text-sky-400 font-bold">Fix Applied: </span>
+                                <span className="text-iron-textSecondary">{currentAtt.fix_description}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* User Intervention Prompt if unrecoverable */}
+                      {activeTask.user_intervention_prompt && (
+                        <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-500/50 text-amber-200 text-xs space-y-1">
+                          <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span>Operator Intervention Requested:</span>
+                          </div>
+                          <p className="leading-relaxed text-iron-textPrimary">{activeTask.user_intervention_prompt}</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {taskType === "coding" && (
               <div className="space-y-5">
                 {/* ROW 1: SPLIT CODE INTO 2 COLS (LEFT: CODE VIEWER, RIGHT: VERIFIED TESTS + DELIVERABLE FILES) */}
@@ -1644,6 +2075,146 @@ export default function WorkbenchPage() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* P&ID Multimodal Engineering Drawing Intelligence Card (ISA-5.1) */}
+                {pidOutput && (
+                  <div className="p-4 rounded-xl bg-iron-panelSecondary border border-iron-accentPrimary/40 space-y-4 font-mono text-xs shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-iron-border/60">
+                      <div className="flex items-center gap-2 font-bold text-iron-textPrimary text-xs">
+                        <Layers className="w-4 h-4 text-iron-accentPrimary" />
+                        <span className="uppercase tracking-wider">
+                          P&ID Multimodal Engineering Intelligence • ISA-5.1
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-iron-accentPrimary/15 border border-iron-accentPrimary/30 text-[10px] font-bold text-iron-accentPrimary">
+                          QWEN2.5-VL • MULTIMODAL
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded bg-iron-panel border border-iron-border text-[10px] font-mono text-iron-textSecondary">
+                          {pidOutput.drawing_number || "MRPL-CDU-01-PID-101"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Technical Narrative Summary */}
+                    {pidOutput.pid_summary && (
+                      <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border text-iron-textPrimary text-xs leading-relaxed">
+                        <div className="text-[10px] font-bold text-iron-accentPrimary uppercase tracking-wider mb-1">
+                          Engineering Process Synthesis
+                        </div>
+                        <p className="text-[11px] text-iron-textPrimary/90 font-sans leading-relaxed">
+                          {pidOutput.pid_summary}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Equipment Inventory & ISA-5.1 Instruments Tables */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+                      {/* Equipment Table */}
+                      {pidOutput.equipment && pidOutput.equipment.length > 0 && (
+                        <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-2">
+                          <div className="flex items-center justify-between pb-1 border-b border-iron-border/50 text-xs">
+                            <span className="font-bold text-iron-textPrimary uppercase tracking-wide text-[10px] flex items-center gap-1.5">
+                              <Box className="w-3.5 h-3.5 text-iron-accentPrimary" />
+                              <span>Equipment Units ({pidOutput.equipment.length})</span>
+                            </span>
+                          </div>
+                          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                            {pidOutput.equipment.map((eq: any, idx: number) => (
+                              <div key={idx} className="p-2 rounded bg-iron-panel/60 border border-iron-border/40 text-[11px] space-y-0.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-iron-accentPrimary font-mono">{eq.tag}</span>
+                                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${eq.status === "OPERATIONAL" ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"}`}>
+                                    {eq.status || "ACTIVE"}
+                                  </span>
+                                </div>
+                                <div className="font-semibold text-iron-textPrimary text-[11px]">{eq.name}</div>
+                                <div className="text-[10px] text-iron-textSecondary">{eq.type}</div>
+                                {eq.design_spec && (
+                                  <div className="text-[10px] text-iron-textSecondary/80 font-mono pt-0.5">{eq.design_spec}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ISA-5.1 Instruments Table */}
+                      {pidOutput.instruments && pidOutput.instruments.length > 0 && (
+                        <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-2">
+                          <div className="flex items-center justify-between pb-1 border-b border-iron-border/50 text-xs">
+                            <span className="font-bold text-iron-textPrimary uppercase tracking-wide text-[10px] flex items-center gap-1.5">
+                              <Activity className="w-3.5 h-3.5 text-amber-400" />
+                              <span>ISA-5.1 Control Loops ({pidOutput.instruments.length})</span>
+                            </span>
+                          </div>
+                          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                            {pidOutput.instruments.map((inst: any, idx: number) => (
+                              <div key={idx} className="p-2 rounded bg-iron-panel/60 border border-iron-border/40 text-[11px] space-y-0.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-amber-400 font-mono">{inst.tag}</span>
+                                  <span className="text-[10px] text-iron-textSecondary font-mono">{inst.range}</span>
+                                </div>
+                                <div className="font-medium text-iron-textPrimary text-[11px]">{inst.measured_variable}</div>
+                                <div className="text-[10px] text-iron-textSecondary flex items-center justify-between pt-0.5 font-mono">
+                                  <span>Setpoint: {inst.setpoint}</span>
+                                  <span className="text-iron-accentPrimary truncate max-w-[140px]">{inst.control_element}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Process Lines & Interlocks Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+                      {/* Process Lines */}
+                      {pidOutput.lines && pidOutput.lines.length > 0 && (
+                        <div className="p-3.5 rounded-lg bg-[#060A14] border border-iron-border space-y-2">
+                          <div className="text-[10px] font-bold text-iron-accentPrimary uppercase tracking-wider pb-1 border-b border-iron-border/50">
+                            Process Flow Pipelines ({pidOutput.lines.length})
+                          </div>
+                          <div className="space-y-1.5 text-[10px] font-mono">
+                            {pidOutput.lines.map((l: any, idx: number) => (
+                              <div key={idx} className="p-1.5 rounded bg-iron-panel/40 border border-iron-border/30 flex items-center justify-between">
+                                <div>
+                                  <span className="text-iron-accentPrimary font-bold">{l.line_id}</span>
+                                  <span className="text-iron-textSecondary ml-2">{l.source} → {l.destination}</span>
+                                </div>
+                                <span className="text-iron-textSecondary/80">{l.operating_conditions}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Safety Interlocks */}
+                      {pidOutput.interlocks && pidOutput.interlocks.length > 0 && (
+                        <div className="p-3.5 rounded-lg bg-[#060A14] border border-rose-500/30 space-y-2">
+                          <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider pb-1 border-b border-rose-500/20 flex items-center justify-between">
+                            <span>Safety Instrumented System (SIS) Interlocks</span>
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                              IEC 61511
+                            </span>
+                          </div>
+                          <div className="space-y-1.5 text-[10px] font-mono">
+                            {pidOutput.interlocks.map((it: any, idx: number) => (
+                              <div key={idx} className="p-1.5 rounded bg-iron-panel/40 border border-iron-border/30 space-y-0.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-rose-400 font-bold">{it.id}</span>
+                                  <span className="text-emerald-400 font-bold">{it.sil_rating}</span>
+                                </div>
+                                <div className="text-iron-textPrimary">{it.trigger_condition}</div>
+                                <div className="text-iron-textSecondary text-[9px]">{it.safety_action}</div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

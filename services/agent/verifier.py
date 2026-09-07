@@ -29,59 +29,65 @@ class AgentVerifier:
         findings: List[str] = []
         errors: List[str] = []
 
-        # 1. Check Tool Execution Status
-        checks.append("Tool execution status check")
+        # In an autonomous ReAct loop with self-healing/retry, we evaluate the FINAL outcome
+        # of each tool invoked. If a tool failed on an earlier attempt but recovered on retry,
+        # it represents a successful self-repair, NOT an unrecovered system failure.
+        tool_runs_by_name: Dict[str, List[Dict[str, Any]]] = {}
         for tr in tool_results:
-            if not tr.get("success", False):
-                errors.append(f"Tool failure detected in '{tr.get('tool_name')}': {tr.get('error')}")
+            tool_name = tr.get("tool_name", "unknown")
+            tool_runs_by_name.setdefault(tool_name, []).append(tr)
 
-        # 2. Check Sandbox Execution (Exit code 0, no runtime exceptions)
-        sandbox_runs = [
-            tr for tr in tool_results if tr.get("tool_name") in ["python.execute_sandbox", "python.execute"]
-        ]
+        # 1. Check Tool Execution Status (Latest invocation per tool)
+        checks.append("Tool execution and autonomous recovery status check")
+        for t_name, runs in tool_runs_by_name.items():
+            final_run = runs[-1]
+            if final_run.get("success", False):
+                if len(runs) > 1:
+                    findings.append(f"Tool '{t_name}' autonomously recovered and succeeded after {len(runs) - 1} retry attempt(s).")
+                else:
+                    findings.append(f"Tool '{t_name}' executed successfully.")
+            else:
+                errors.append(f"Tool failure detected in '{t_name}': {final_run.get('error')}")
+
+        # 2. Check Sandbox Execution (Exit code 0, no runtime exceptions on final run)
+        sandbox_runs = tool_runs_by_name.get("python.execute_sandbox", []) + tool_runs_by_name.get("python.execute", [])
         if sandbox_runs:
             checks.append("Sandbox execution verification (exit code 0, no runtime exceptions)")
-            for run in sandbox_runs:
-                if not run.get("success", False):
-                    errors.append(f"Sandbox error: {run.get('error')}")
-                else:
-                    findings.append("Python script and assertions executed successfully with exit code 0.")
+            final_sandbox = sandbox_runs[-1]
+            if final_sandbox.get("success", False):
+                findings.append("Python script and assertions executed successfully with exit code 0.")
+            else:
+                errors.append(f"Sandbox error: {final_sandbox.get('error')}")
 
         # 3. Check Spreadsheet Operations & Modifications
-        spreadsheet_runs = [
-            tr for tr in tool_results if tr.get("tool_name") in ["spreadsheet.modify", "spreadsheet.create"]
-        ]
+        spreadsheet_runs = tool_runs_by_name.get("spreadsheet.modify", []) + tool_runs_by_name.get("spreadsheet.create", [])
         if spreadsheet_runs:
             checks.append("Spreadsheet structural integrity & formula validation check")
-            for run in spreadsheet_runs:
-                if run.get("success", False):
-                    findings.append("Spreadsheet modifications, formulas, and conditional formatting verified.")
-                else:
-                    errors.append(f"Spreadsheet modification failure: {run.get('error')}")
+            final_sheet = spreadsheet_runs[-1]
+            if final_sheet.get("success", False):
+                findings.append("Spreadsheet modifications, formulas, and conditional formatting verified.")
+            else:
+                errors.append(f"Spreadsheet modification failure: {final_sheet.get('error')}")
 
         # 4. Check Calculation Engine Operations
-        calc_runs = [
-            tr for tr in tool_results if tr.get("tool_name") in ["calculation.step_by_step", "calculator"]
-        ]
+        calc_runs = tool_runs_by_name.get("calculation.step_by_step", []) + tool_runs_by_name.get("calculator", [])
         if calc_runs:
             checks.append("Engineering calculation & step-by-step mathematical trace verification")
-            for run in calc_runs:
-                if run.get("success", False):
-                    findings.append("Step-by-step calculation trace verified with physical bound checks.")
-                else:
-                    errors.append(f"Calculation error: {run.get('error')}")
+            final_calc = calc_runs[-1]
+            if final_calc.get("success", False):
+                findings.append("Step-by-step calculation trace verified with physical bound checks.")
+            else:
+                errors.append(f"Calculation error: {final_calc.get('error')}")
 
         # 5. Check Document & Presentation Editing
-        doc_ppt_runs = [
-            tr for tr in tool_results if tr.get("tool_name") in ["document.modify_docx", "presentation.modify_pptx"]
-        ]
+        doc_ppt_runs = tool_runs_by_name.get("document.modify_docx", []) + tool_runs_by_name.get("presentation.modify_pptx", [])
         if doc_ppt_runs:
             checks.append("Document / Presentation editorial change validation")
-            for run in doc_ppt_runs:
-                if run.get("success", False):
-                    findings.append(f"Content modifications and formatting validated for {run.get('tool_name')}.")
-                else:
-                    errors.append(f"Document modification failure: {run.get('error')}")
+            final_doc = doc_ppt_runs[-1]
+            if final_doc.get("success", False):
+                findings.append(f"Content modifications and formatting validated for {final_doc.get('tool_name')}.")
+            else:
+                errors.append(f"Document modification failure: {final_doc.get('error')}")
 
         # 6. Check Generated Artifacts & Cryptographic Provenance
         if generated_artifacts:
@@ -124,5 +130,5 @@ class AgentVerifier:
             findings=findings,
             errors=errors,
             recommendation="Execution validated. Deliverable confirmed." if passed else "Action required: Fix detected tool/sandbox errors.",
-            verified_at=datetime.utcnow(),
+            verified_at=datetime.now(),
         )

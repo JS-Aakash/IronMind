@@ -1,0 +1,2 @@
+MRPL SAFETY STANDARD: EMERGENCY SHUTDOWN VALVES (ESD-101)
+ESD-101 must close within 2.5 seconds upon activation of High-High Pressure Alarm (PAHH-101).

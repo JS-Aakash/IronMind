@@ -10,10 +10,12 @@ import {
   Edit3,
   HardDrive,
   Info,
+  Plus,
   RefreshCw,
   Server,
   Settings2,
   ShieldCheck,
+  Trash2,
   X,
   Zap,
 } from "lucide-react";
@@ -31,6 +33,60 @@ export default function ModelsPage() {
   const [customDisplayName, setCustomDisplayName] = useState("");
   const [isConfiguring, setIsConfiguring] = useState(false);
   const [configureMessage, setConfigureMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Register New Model modal state
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+  const [regName, setRegName] = useState("");
+  const [regDisplayName, setRegDisplayName] = useState("");
+  const [regRole, setRegRole] = useState("reasoning");
+  const [regCapabilities, setRegCapabilities] = useState("reasoning, analysis");
+  const [regContextLength, setRegContextLength] = useState(32768);
+  const [regVram, setRegVram] = useState(5000);
+  const [regDescription, setRegDescription] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+
+  const handleRegisterModel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regName.trim() || !regDisplayName.trim()) return;
+    try {
+      setIsRegistering(true);
+      setRegisterError(null);
+      await api.registerModel({
+        name: regName.trim(),
+        display_name: regDisplayName.trim(),
+        provider: "ollama",
+        role: regRole,
+        capabilities: regCapabilities.split(",").map((c) => c.trim()).filter(Boolean),
+        context_length: Number(regContextLength) || 32768,
+        vram_estimate_mb: Number(regVram) || 4500,
+        enabled: true,
+        description: regDescription.trim() || `Custom on-premise model ${regName.trim()}`,
+      });
+      await fetchStatus(true);
+      setIsRegisterOpen(false);
+      setRegName("");
+      setRegDisplayName("");
+      setRegDescription("");
+    } catch (err: any) {
+      console.error("Failed to register model:", err);
+      setRegisterError(err?.message || "Failed to register model.");
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleDeleteModel = async (modelId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm(`Unregister and remove model '${modelId}' from registry?`)) return;
+    try {
+      await api.deleteModel(modelId);
+      await fetchStatus(true);
+    } catch (err: any) {
+      console.error("Failed to delete model:", err);
+      alert(err?.message || "Failed to unregister model.");
+    }
+  };
 
   // Initial fetch
   const fetchStatus = async (isManual = false) => {
@@ -269,6 +325,14 @@ export default function ModelsPage() {
             </div>
 
             <button
+              onClick={() => setIsRegisterOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition border border-sky-400/40 cursor-pointer shadow-sm active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Register Model</span>
+            </button>
+
+            <button
               onClick={() => fetchStatus(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-iron-panelSecondary/80 hover:bg-iron-border/60 text-iron-textPrimary text-xs font-semibold transition border border-iron-border cursor-pointer shadow-sm active:scale-95"
             >
@@ -429,6 +493,17 @@ export default function ModelsPage() {
                   <Settings2 className="w-3.5 h-3.5 text-iron-accentSecondary" />
                   <span>Change Model</span>
                 </button>
+
+                {(model as any).is_custom && (
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteModel(model.id, e)}
+                    className="p-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 transition cursor-pointer"
+                    title="Unregister and remove this custom model"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -572,6 +647,198 @@ export default function ModelsPage() {
           </div>
         </div>
       )}
+
+      {/* Register New Model Modal */}
+      {isRegisterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-lg p-6 rounded-3xl bg-iron-panel border border-iron-border shadow-2xl space-y-6 relative max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-sky-400" />
+                  <h3 className="text-lg font-bold text-iron-textPrimary">
+                    Register New Open-Weight Model
+                  </h3>
+                </div>
+                <p className="text-xs text-iron-textSecondary">
+                  Add any local Ollama or HuggingFace model definition to IronMind's capability catalog without restarting services.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setIsRegisterOpen(false)}
+                className="p-2 rounded-xl text-iron-textSecondary hover:text-white hover:bg-iron-border/60 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {registerError && (
+              <div className="p-3 rounded-xl bg-iron-error/15 border border-iron-error/40 text-iron-error text-xs font-mono">
+                {registerError}
+              </div>
+            )}
+
+            <form onSubmit={handleRegisterModel} className="space-y-4">
+              {/* Quick Select from Installed Models */}
+              {installedModels.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-iron-textPrimary">
+                    Detected in Local Ollama:
+                  </label>
+                  <div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto p-1.5 rounded-xl bg-iron-midnight/50 border border-iron-border/40">
+                    {installedModels.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => {
+                          setRegName(tag);
+                          setRegDisplayName(tag.split(":")[0].toUpperCase() + ` (${tag.split(":")[1] || "Default"})`);
+                        }}
+                        className={`px-2.5 py-1 rounded-lg border text-[11px] font-mono transition cursor-pointer ${
+                          regName === tag
+                            ? "bg-sky-500/20 border-sky-400 text-sky-300 font-bold"
+                            : "bg-iron-panelSecondary/60 border-iron-border/60 text-iron-textSecondary hover:text-iron-textPrimary"
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Model Tag */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-iron-textPrimary">
+                  Model Identifier / Tag <span className="text-iron-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={regName}
+                  onChange={(e) => setRegName(e.target.value)}
+                  placeholder="e.g. llama3:8b, mistral:7b, deepseek-coder:6.7b"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs font-mono focus:outline-none focus:border-sky-400"
+                />
+              </div>
+
+              {/* Display Label */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-iron-textPrimary">
+                  Display Label <span className="text-iron-error">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={regDisplayName}
+                  onChange={(e) => setRegDisplayName(e.target.value)}
+                  placeholder="e.g. Llama 3 (8B General Intelligence)"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs focus:outline-none focus:border-sky-400"
+                />
+              </div>
+
+              {/* Functional Role */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-iron-textPrimary">
+                  Primary Functional Role
+                </label>
+                <select
+                  value={regRole}
+                  onChange={(e) => setRegRole(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs font-mono focus:outline-none focus:border-sky-400"
+                >
+                  <option value="reasoning">Reasoning & Multi-Step Planning</option>
+                  <option value="coding">Coding & Sandbox Script Verification</option>
+                  <option value="vision">Vision & Multimodal Inspection</option>
+                  <option value="routing">Routing & Intent Triage</option>
+                </select>
+              </div>
+
+              {/* Capabilities */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-iron-textPrimary">
+                  Capabilities (Comma-Separated)
+                </label>
+                <input
+                  type="text"
+                  value={regCapabilities}
+                  onChange={(e) => setRegCapabilities(e.target.value)}
+                  placeholder="e.g. reasoning, document_summarization, tool_calling"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs font-mono focus:outline-none focus:border-sky-400"
+                />
+              </div>
+
+              {/* Memory & Context Specs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-iron-textPrimary">
+                    Context Window
+                  </label>
+                  <input
+                    type="number"
+                    value={regContextLength}
+                    onChange={(e) => setRegContextLength(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs font-mono focus:outline-none focus:border-sky-400"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-iron-textPrimary">
+                    VRAM Estimate (MB)
+                  </label>
+                  <input
+                    type="number"
+                    value={regVram}
+                    onChange={(e) => setRegVram(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs font-mono focus:outline-none focus:border-sky-400"
+                  />
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-iron-textPrimary">
+                  Description
+                </label>
+                <textarea
+                  rows={2}
+                  value={regDescription}
+                  onChange={(e) => setRegDescription(e.target.value)}
+                  placeholder="Operational notes, engineering use-case..."
+                  className="w-full px-3.5 py-2 rounded-xl bg-iron-panelSecondary border border-iron-border text-iron-textPrimary text-xs focus:outline-none focus:border-sky-400 resize-none"
+                />
+              </div>
+
+              {/* Modal Footer */}
+              <div className="pt-4 border-t border-iron-border/60 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  disabled={isRegistering}
+                  onClick={() => setIsRegisterOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs text-iron-textSecondary hover:text-white transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isRegistering || !regName.trim() || !regDisplayName.trim()}
+                  className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold font-mono transition cursor-pointer flex items-center gap-2 disabled:opacity-50 shadow-md shadow-sky-600/20"
+                >
+                  {isRegistering ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Plus className="w-3.5 h-3.5" />
+                  )}
+                  <span>Register in Gateway</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

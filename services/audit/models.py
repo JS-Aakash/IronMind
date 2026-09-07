@@ -22,7 +22,7 @@ class AuditEvent(BaseModel):
     event_id: str
     task_id: str
     event_type: AuditEventType
-    timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
     source_service: str
     actor: str = "agent_orchestrator"
     duration_ms: Optional[float] = None
@@ -44,7 +44,7 @@ class TaskAuditSummary(BaseModel):
     generated_artifacts: List[Dict[str, Any]] = Field(default_factory=list)
     errors: List[str] = Field(default_factory=list)
     completion_status: str = "completed"
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     completed_at: Optional[str] = None
     duration_ms: float = 0.0
     events: List[AuditEvent] = Field(default_factory=list)

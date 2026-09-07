@@ -50,9 +50,11 @@ class ArtifactsService:
         if self.registry_file.exists():
             try:
                 data = json.loads(self.registry_file.read_text(encoding="utf-8"))
+                loaded: Dict[str, GeneratedArtifactRecord] = {}
                 for item in data.get("artifacts", []):
                     rec = GeneratedArtifactRecord(**item)
-                    self._artifacts[rec.artifact_id] = rec
+                    loaded[rec.artifact_id] = rec
+                self._artifacts = loaded
             except Exception as e:
                 logger.warning("Failed to load artifact registry from '%s': %s", self.registry_file, str(e))
         
@@ -63,7 +65,7 @@ class ArtifactsService:
                 task_id="TASK_INSPECT_001",
                 filename="MRPL_Approval_Note_P_101_Sample.docx",
                 type="docx",
-                created_at=datetime.utcnow().isoformat(),
+                created_at=datetime.now().isoformat(),
                 source_documents=["MRPL_SOP_P101_Pump_Maintenance.pdf"],
                 models_used=["qwen2.5vl:7b", "qwen3:8b"],
                 verification_status="verified",
@@ -81,7 +83,7 @@ class ArtifactsService:
             data = {
                 "artifacts": [rec.dict() for rec in self._artifacts.values()],
                 "total_count": len(self._artifacts),
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             }
             self.registry_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
         except Exception as e:

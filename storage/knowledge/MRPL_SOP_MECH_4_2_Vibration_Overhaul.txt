@@ -1,0 +1,33 @@
+MANGALORE REFINERY AND PETROCHEMICALS LIMITED (MRPL)
+STANDARD OPERATING PROCEDURE: SOP-MECH-4.2
+TITLE: Centrifugal Pump Vibration Severity, Mechanical Seal Inspection, and Maintenance Overhaul Protocol
+DOCUMENT CODE: MRPL-SOP-MECH-4.2-REV4
+EFFECTIVE DATE: 15-JAN-2025
+GOVERNING UNIT: Mechanical Maintenance & Asset Integrity Division
+
+1. PURPOSE & SCOPE:
+This SOP establishes mandatory vibration velocity thresholds, seal inspection criteria, and overhaul triggers for all API 610 centrifugal process pumps operating across CDU-1, VDU, and Phase-3 units.
+
+2. VIBRATION THRESHOLDS (ISO 10816-3 / API 610 CLASS II/III MACHINERY):
+- SECTION 4.2: PERMISSIBLE VIBRATION LIMITS & OVERHAUL MANDATE:
+  * Zone A (Newly Commissioned / Normal): RMS Velocity <= 2.8 mm/s. Continuous routine monitoring.
+  * Zone B (Acceptable for Long-term Operation): RMS Velocity 2.8 mm/s to 4.5 mm/s. Safe continuous operation.
+  * Zone C (Restricted Operation / Priority Maintenance): RMS Velocity 4.5 mm/s to 7.1 mm/s.
+    - MANDATORY REQUIREMENT: When overall RMS vibration exceeds 4.5 mm/s (such as observed on Pump P-101 at 4.8 mm/s), an official Approval Note must be prepared within 24 hours to authorize bearing replacement, shaft alignment check, and dynamic rebalancing.
+  * Zone D (Unacceptable / Emergency Trip): RMS Velocity > 7.1 mm/s. Immediate planned shutdown to prevent catastrophic impeller failure.
+
+
+3. BEARING TEMPERATURE THRESHOLDS:
+- Normal Operating Range: 55°C to 75°C.
+- Alarm Threshold: 80°C.
+- Trip Threshold: 90°C.
+
+4. MECHANICAL SEAL INSPECTION CRITERIA:
+- Allowable primary face leakage for non-hazardous slurry services: <= 5 drops/minute (dry weeping).
+- Continuous liquid stream or weeping exceeding 5 drops/minute requires immediate seal cartridge overhaul and barrier fluid flush verification.
+
+5. APPROVAL WORKFLOW FOR OVERHAUL:
+Every overhaul request exceeding 4.5 mm/s vibration or mechanical seal replacement must be documented in a 3-tier authorized Approval Note:
+- Tier 1: Prepared by Lead Reliability Engineer
+- Tier 2: Verified by Superintending Maintenance Engineer
+- Tier 3: Approved by Chief General Manager (Technical)

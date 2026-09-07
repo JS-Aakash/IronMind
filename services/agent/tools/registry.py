@@ -21,6 +21,8 @@ from services.agent.tools.extended_tools import (
 )
 from services.agent.tools.file_tools import (
     FileCopyTool,
+    FileCreateTool,
+    FileModifyTool,
     FileReadTool,
     FileRenameTool,
     FileWriteTool,
@@ -33,7 +35,7 @@ from services.agent.tools.spreadsheet_tools import (
     SpreadsheetInspectTool,
     SpreadsheetModifyTool,
 )
-from services.agent.tools.vision_tools import VisionAnalyzeTool
+from services.agent.tools.vision_tools import PidAnalyzeTool, VisionAnalyzeTool
 from services.sovereignty.service import SovereigntyService
 
 logger = logging.getLogger(__name__)
@@ -70,6 +72,8 @@ class ToolRegistry:
             # File Operations
             FileReadTool(),
             FileWriteTool(),
+            FileCreateTool(),
+            FileModifyTool(),
             FileCopyTool(),
             FileRenameTool(),
             # Calculations
@@ -95,8 +99,9 @@ class ToolRegistry:
             PresentationModifyPptxTool(),
             # Report Tools
             PdfCreateTool(),
-            # Vision Tools
+            # Vision & Multimodal Tools
             VisionAnalyzeTool(),
+            PidAnalyzeTool(),
         ]
         for t in tools:
             self._tools[t.name] = t

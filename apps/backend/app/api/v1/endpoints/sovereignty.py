@@ -37,3 +37,10 @@ async def get_network_audit_details(sovereignty_svc: SovereigntyService = Depend
 async def trigger_airgap_verification_probe(sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service)) -> Dict[str, Any]:
     """Trigger a live diagnostic air-gap verification probe testing loopback isolation and cloud guardrails."""
     return sovereignty_svc.verify_airgap_status()
+
+
+@router.get("/network-monitor")
+async def get_live_network_monitor(sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service)) -> Dict[str, Any]:
+    """Inspect active sockets and network interfaces in real time to prove zero external egress."""
+    return sovereignty_svc.get_live_network_audit()
+

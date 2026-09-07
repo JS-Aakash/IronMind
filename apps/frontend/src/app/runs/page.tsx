@@ -69,7 +69,7 @@ export default function AgentRunsPage() {
     const matchesSearch =
       searchQuery.trim() === "" ||
       t.task_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (t.goal && t.goal.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      ((t.goal || t.user_goal) && (t.goal || t.user_goal)!.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (t.task_type && t.task_type.toLowerCase().includes(searchQuery.toLowerCase())) ||
       (t.primary_model && t.primary_model.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -283,7 +283,7 @@ export default function AgentRunsPage() {
                     </div>
 
                     <p className="text-xs text-iron-textPrimary line-clamp-2 leading-relaxed font-sans">
-                      {t.goal || "Industrial execution task"}
+                      {t.goal || t.user_goal || "Industrial execution task"}
                     </p>
 
                     <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-iron-textSecondary pt-2 border-t border-iron-border/60">
@@ -374,7 +374,7 @@ export default function AgentRunsPage() {
                     Task Specification / Intent
                   </span>
                   <p className="text-xs text-iron-textPrimary leading-relaxed bg-iron-panelSecondary/60 p-3 rounded-lg border border-iron-border">
-                    {selectedTask.goal}
+                    {selectedTask.goal || selectedTask.user_goal || "No task specification provided."}
                   </p>
                 </div>
 

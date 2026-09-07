@@ -62,6 +62,14 @@ class AgentService:
             try:
                 data = json.loads(task_file.read_text(encoding="utf-8"))
                 state = AgentState(**data)
+                # Any task left in executing, planning, or pending from previous process runs is not active
+                if state.status in [AgentStatus.EXECUTING, AgentStatus.PLANNING, AgentStatus.PENDING]:
+                    state.status = AgentStatus.CANCELLED
+                    data["status"] = "cancelled"
+                    try:
+                        task_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+                    except Exception:
+                        pass
                 self._tasks[state.task_id] = state
             except Exception as e:
                 logger.warning("Could not load persisted task %s: %s", task_file, str(e))

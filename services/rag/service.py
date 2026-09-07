@@ -51,12 +51,15 @@ class RagService:
             reg_path = self.storage_dir / "documents_registry.json"
             if reg_path.exists():
                 data = json.loads(reg_path.read_text(encoding="utf-8"))
+                loaded_docs: Dict[str, KnowledgeDocument] = {}
                 for d in data.get("documents", []):
                     try:
                         doc = KnowledgeDocument(**d)
-                        self._documents[doc.id] = doc
+                        loaded_docs[doc.id] = doc
                     except Exception as ex:
                         logger.debug("Skipping invalid doc entry: %s", ex)
+                if loaded_docs:
+                    self._documents = loaded_docs
         except Exception as e:
             logger.warning("Could not load knowledge document registry: %s", e)
 
@@ -125,7 +128,7 @@ class RagService:
                 file_type=s.get("file_type", "PDF"),
                 category=s.get("category", "SOP"),
                 chunk_count=len(s["pages"]),
-                uploaded_at=datetime.utcnow(),
+                uploaded_at=datetime.now(),
                 size_bytes=1024 * len(s["pages"]),
                 ai_description=s.get("ai_description"),
                 key_topics=s.get("key_topics", []),
@@ -156,6 +159,7 @@ class RagService:
         await self.vector_store.add_chunks(chunks)
 
     def list_documents(self) -> List[KnowledgeDocument]:
+        self._load_registry()
         return list(self._documents.values())
 
     def _save_registry(self) -> None:
@@ -164,7 +168,7 @@ class RagService:
             data = {
                 "documents": [doc.dict() if hasattr(doc, "dict") else doc.model_dump() for doc in self._documents.values()],
                 "total": len(self._documents),
-                "updated_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             }
             reg_path.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
         except Exception as e:
@@ -293,7 +297,7 @@ class RagService:
             file_type=file_ext,
             category=category,
             chunk_count=len(chunks),
-            uploaded_at=datetime.utcnow(),
+            uploaded_at=datetime.now(),
             size_bytes=len(raw_bytes),
             ai_description=ai_description,
             key_topics=key_topics,
@@ -341,7 +345,8 @@ class RagService:
                 prompt=prompt,
                 system_prompt=system_prompt,
                 temperature=0.0,
-                max_tokens=800,
+                max_tokens=2048,
+                think=False,
                 format="json",
             )
             raw = res.text.strip()

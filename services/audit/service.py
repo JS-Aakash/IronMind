@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -63,8 +63,9 @@ class AuditService:
     def _seed_sample_audit_trail(self) -> None:
         """Seed complete high-fidelity audit trail for MRPL Slurry Pump P-101 approval note generation."""
         task_id = "TASK_INSPECT_001"
-        created_at = "2026-09-01T06:00:00.000000"
-        completed_at = "2026-09-01T06:00:12.450000"
+        now = datetime.now()
+        created_at = (now - timedelta(minutes=18)).isoformat()
+        completed_at = (now - timedelta(minutes=17, seconds=48)).isoformat()
 
         events_data = [
             (
@@ -140,12 +141,13 @@ class AuditService:
         ]
 
         events: List[AuditEvent] = []
-        for ev_type, src, actor, dur, details in events_data:
+        for i, (ev_type, src, actor, dur, details) in enumerate(events_data):
+            ev_ts = (now - timedelta(minutes=18) + timedelta(seconds=i * 1.5)).isoformat()
             ev = AuditEvent(
                 event_id=generate_uuid("EVT"),
                 task_id=task_id,
                 event_type=ev_type,
-                timestamp=created_at,
+                timestamp=ev_ts,
                 source_service=src,
                 actor=actor,
                 duration_ms=dur,
@@ -179,8 +181,8 @@ class AuditService:
 
         # Seed 2: Python pump calculation and sandbox verification
         task2_id = "TASK_CALC_002"
-        created2 = "2026-09-02T10:15:00.000000"
-        completed2 = "2026-09-02T10:15:08.320000"
+        created2 = (now - timedelta(minutes=10)).isoformat()
+        completed2 = (now - timedelta(minutes=9, seconds=52)).isoformat()
         events2_data = [
             (AuditEventType.TASK_CREATED, "Core Gateway", "local_operator", 0.0, {"goal": "Calculate efficiency of industrial pump and verify in sandbox."}),
             (AuditEventType.TASK_CLASSIFIED, "Model Router", "qwen3:0.6b", 38.0, {"task_type": "coding", "required_capabilities": ["coding", "sandbox_execution", "verification"]}),
@@ -192,12 +194,13 @@ class AuditService:
             (AuditEventType.TASK_COMPLETED, "Agent Orchestrator", "agent_orchestrator", 8320.0, {"completion_status": "completed", "artifacts_count": 1}),
         ]
         evs2 = []
-        for ev_type, src, actor, dur, details in events2_data:
+        for i, (ev_type, src, actor, dur, details) in enumerate(events2_data):
+            ev_ts = (now - timedelta(minutes=10) + timedelta(seconds=i * 1.2)).isoformat()
             ev = AuditEvent(
                 event_id=generate_uuid("EVT"),
                 task_id=task2_id,
                 event_type=ev_type,
-                timestamp=created2,
+                timestamp=ev_ts,
                 source_service=src,
                 actor=actor,
                 duration_ms=dur,
@@ -243,7 +246,7 @@ class AuditService:
             event_id=generate_uuid("EVT"),
             task_id=task_id,
             event_type=event_type,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now().isoformat(),
             source_service=source_service,
             actor=actor,
             duration_ms=duration_ms,
@@ -254,7 +257,7 @@ class AuditService:
             self._task_trails[task_id] = TaskAuditSummary(
                 task_id=task_id,
                 task_goal=details.get("goal", "Autonomous task execution"),
-                created_at=datetime.utcnow().isoformat(),
+                created_at=datetime.now().isoformat(),
             )
 
         trail = self._task_trails[task_id]
@@ -294,16 +297,16 @@ class AuditService:
                 trail.source_citations = [{"finding": str(f)} for f in details.get("checks", [])]
         elif event_type == AuditEventType.TASK_COMPLETED:
             trail.completion_status = "completed"
-            trail.completed_at = datetime.utcnow().isoformat()
-            if duration_ms:
-                trail.duration_ms = duration_ms
-            if details.get("artifacts"):
-                for art in details["artifacts"]:
-                    if art not in trail.generated_artifacts:
-                        trail.generated_artifacts.append(art)
+            trail.completed_at = datetime.now().isoformat()
+            if trail.created_at:
+                try:
+                    c_time = datetime.fromisoformat(trail.created_at)
+                    trail.duration_ms = (datetime.now() - c_time).total_seconds() * 1000
+                except Exception:
+                    pass
         elif event_type == AuditEventType.TASK_FAILED:
             trail.completion_status = "failed"
-            trail.completed_at = datetime.utcnow().isoformat()
+            trail.completed_at = datetime.now().isoformat()
             trail.errors.append(details.get("error", "Unknown task failure"))
 
         self._append_to_ledger(event)

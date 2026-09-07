@@ -63,5 +63,5 @@ class NormalizedDocument(BaseModel):
     extracted_tables: List[TableData] = Field(default_factory=list)
     extracted_equipment_tags: List[str] = Field(default_factory=list)
     summary: str = ""
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     metadata: Dict[str, Any] = Field(default_factory=dict)

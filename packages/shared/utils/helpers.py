@@ -24,5 +24,5 @@ def calculate_file_hash(file_path: Union[str, Path]) -> str:
 
 
 def get_current_utc_timestamp() -> datetime:
-    """Get current UTC timestamp."""
-    return datetime.utcnow()
+    """Get current host local timestamp for unified temporal synchronization."""
+    return datetime.now()

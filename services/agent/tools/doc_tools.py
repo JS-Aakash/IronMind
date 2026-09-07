@@ -130,7 +130,7 @@ class DocumentCreateTool(BaseTool):
         artifacts_dir = Path("storage/artifacts")
         artifacts_dir.mkdir(parents=True, exist_ok=True)
         ext = "md" if doc_format == "markdown" else "txt"
-        timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"MRPL_Approval_Note_{equipment_id.replace('-', '_')}_{timestamp_str}.{ext}"
         safe_path = validate_safe_storage_path(f"storage/artifacts/{filename}", allow_creation_in="storage/artifacts")
 
@@ -141,7 +141,7 @@ class DocumentCreateTool(BaseTool):
             "=" * 72,
             f"TITLE: {title.upper()}",
             f"EQUIPMENT TAG: {equipment_id}",
-            f"GENERATED AT: {datetime.utcnow().strftime('%d-%b-%Y %H:%M:%S UTC')}",
+            f"GENERATED AT: {datetime.now().strftime('%d-%b-%Y %H:%M:%S')}",
             "=" * 72,
             "",
         ]
@@ -500,7 +500,7 @@ class DocumentModifyDocxTool(BaseTool):
                 change_summary.append(f"Appended section '{title}' with {len(bullets)} bullet points.")
 
         # Save Updated DOCX
-        timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = safe_path.stem.replace(" ", "_")
         out_filename = custom_out_filename or f"{base_name}_updated_{timestamp_str}.docx"
         if not out_filename.endswith(".docx"):
@@ -524,7 +524,7 @@ class DocumentModifyDocxTool(BaseTool):
                 "task_id": task_id,
                 "filename": out_filename,
                 "type": "docx",
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now().isoformat(),
                 "source_documents": [safe_path.name],
                 "models_used": ["qwen3:8b"],
                 "verification_status": "verified",

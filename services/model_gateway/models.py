@@ -22,7 +22,8 @@ class GenerationRequest(BaseModel):
     system_prompt: Optional[str] = Field(default=None, description="System instructions")
     images: Optional[List[str]] = Field(default=None, description="List of base64 strings or local file paths")
     temperature: float = Field(default=0.2, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(default=2048, ge=1, le=65536)
+    max_tokens: Optional[int] = Field(default=4096, ge=1, le=65536)
+    think: Optional[bool] = Field(default=False, description="Enable thinking/reasoning tokens (default False for fast direct generation)")
     json_format: bool = Field(default=False, description="Enforce valid JSON output")
     schema_definition: Optional[Dict[str, Any]] = Field(default=None, description="Target JSON schema to enforce")
     stop_sequences: Optional[List[str]] = Field(default=None)
@@ -39,7 +40,7 @@ class GenerationResponse(BaseModel):
     completion_tokens: int = 0
     latency_ms: float = 0.0
     finish_reason: str = "stop"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
 
 
 class StreamChunk(BaseModel):
@@ -56,4 +57,4 @@ class ModelHealthResponse(BaseModel):
     status: ModelStatus = ModelStatus.STANDBY
     latency_ms: float = 0.0
     details: Dict[str, Any] = Field(default_factory=dict)
-    checked_at: datetime = Field(default_factory=datetime.utcnow)
+    checked_at: datetime = Field(default_factory=datetime.now)

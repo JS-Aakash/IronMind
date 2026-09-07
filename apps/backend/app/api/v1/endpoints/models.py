@@ -12,6 +12,7 @@ from packages.shared.models.schemas import ModelInfo
 from services.model_gateway.models import (
     GenerationRequest,
     GenerationResponse,
+    ModelDefinition,
     ModelHealthResponse,
 )
 from services.model_gateway.service import ModelService
@@ -115,6 +116,7 @@ async def generate_with_model(
             system_prompt=request.system_prompt,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
+            think=request.think,
         )
     # Structured JSON generation
     elif request.json_format or request.schema_definition:
@@ -125,6 +127,7 @@ async def generate_with_model(
             system_prompt=request.system_prompt,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
+            think=request.think,
         )
     # Standard text generation
     else:
@@ -135,6 +138,7 @@ async def generate_with_model(
             temperature=request.temperature,
             max_tokens=request.max_tokens,
             stop_sequences=request.stop_sequences,
+            think=request.think,
         )
 
     # Log to sovereignty and audit trail
@@ -257,3 +261,61 @@ async def unload_model(
         return model
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register_model(
+    model_def: ModelDefinition,
+    model_svc: ModelService = Depends(get_model_gateway_service),
+    sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service),
+):
+    """Register a new on-premise open-weight model definition into the Model Gateway."""
+    try:
+        model_svc.registry.register_model(model_def)
+        sovereignty_svc.log_event(
+            event_type="MODEL_REGISTERED",
+            source_service="Model Gateway",
+            details={"name": model_def.name, "role": str(model_def.role), "display_name": model_def.display_name},
+        )
+        return {"status": "success", "message": f"Model '{model_def.name}' registered successfully.", "model": model_def.dict()}
+    except Exception as e:
+        logger.error("Failed to register model %s: %s", model_def.name, e)
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/{model_id}")
+async def unregister_or_delete_model(
+    model_id: str,
+    model_svc: ModelService = Depends(get_model_gateway_service),
+    sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service),
+):
+    """Unregister and remove an open-weight model definition from the registry."""
+    success = model_svc.registry.unregister_model(model_id)
+    if not success:
+        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found in registry.")
+    sovereignty_svc.log_event(
+        event_type="MODEL_UNREGISTERED",
+        source_service="Model Gateway",
+        details={"model_id": model_id},
+    )
+    return {"status": "success", "message": f"Model '{model_id}' removed from registry."}
+
+
+@router.post("/{model_id}/toggle")
+async def toggle_model_status(
+    model_id: str,
+    enabled: bool = Query(..., description="Target enabled status"),
+    model_svc: ModelService = Depends(get_model_gateway_service),
+    sovereignty_svc: SovereigntyService = Depends(get_sovereignty_service),
+):
+    """Enable or disable a model in the registry."""
+    model = model_svc.registry.set_model_enabled(model_id, enabled)
+    if not model:
+        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found in registry.")
+    sovereignty_svc.log_event(
+        event_type="MODEL_STATUS_TOGGLED",
+        source_service="Model Gateway",
+        details={"model_id": model_id, "enabled": enabled},
+    )
+    return {"status": "success", "model_id": model_id, "enabled": enabled}
+

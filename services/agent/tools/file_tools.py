@@ -324,3 +324,181 @@ class FileRenameTool(BaseTool):
             )
         except Exception as e:
             return ToolResult(tool_name=self.name, success=False, error=f"File rename failed: {str(e)}")
+
+
+class FileCreateTool(BaseTool):
+    """Safely create a new file with initial content strictly inside authorized sovereign storage."""
+
+    @property
+    def name(self) -> str:
+        return "file.create"
+
+    @property
+    def description(self) -> str:
+        return "Create a new file with initial content in authorized sovereign storage (e.g. storage/temp/ or storage/artifacts/)."
+
+    @property
+    def input_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "file_path": {"type": "string", "description": "Target file path or filename to create (e.g. 'storage/artifacts/analysis.txt')"},
+                "content": {"type": "string", "description": "Initial text or code content", "default": ""},
+                "overwrite": {"type": "boolean", "description": "Whether to overwrite if file already exists (default: true)", "default": True},
+            },
+            "required": ["file_path"],
+        }
+
+    @property
+    def output_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "file_path": {"type": "string"},
+                "filename": {"type": "string"},
+                "bytes_written": {"type": "integer"},
+                "sha256_hash": {"type": "string"},
+            },
+        }
+
+    @property
+    def permissions(self) -> List[ToolPermission]:
+        return [ToolPermission.STORAGE_WRITE]
+
+    async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
+        file_path_str = arguments.get("file_path") or arguments.get("filename") or ""
+        content = arguments.get("content", "")
+        overwrite = arguments.get("overwrite", True)
+
+        if not file_path_str or not isinstance(file_path_str, str):
+            return ToolResult(tool_name=self.name, success=False, error="Parameter 'file_path' must be a non-empty string.")
+
+        try:
+            target_dir = "storage/artifacts" if "artifact" in file_path_str else "storage/temp"
+            safe_path = validate_safe_storage_path(file_path_str, allow_creation_in=target_dir)
+
+            if safe_path.exists() and not overwrite:
+                return ToolResult(tool_name=self.name, success=False, error=f"File already exists at '{safe_path}' and overwrite=False.")
+
+            safe_path.parent.mkdir(parents=True, exist_ok=True)
+            raw_bytes = content.encode("utf-8") if isinstance(content, str) else str(content).encode("utf-8")
+            safe_path.write_bytes(raw_bytes)
+            sha256 = hashlib.sha256(raw_bytes).hexdigest()
+
+            return ToolResult(
+                tool_name=self.name,
+                success=True,
+                output={
+                    "file_path": str(safe_path),
+                    "filename": safe_path.name,
+                    "bytes_written": len(raw_bytes),
+                    "sha256_hash": sha256,
+                },
+                metadata={"filename": safe_path.name, "bytes_written": len(raw_bytes), "sha256": sha256},
+            )
+        except Exception as e:
+            return ToolResult(tool_name=self.name, success=False, error=f"File create failed: {str(e)}")
+
+
+class FileModifyTool(BaseTool):
+    """Safely modify an existing text file by replacing target patterns, appending, or prepending content."""
+
+    @property
+    def name(self) -> str:
+        return "file.modify"
+
+    @property
+    def description(self) -> str:
+        return "Modify an existing text, script, or configuration file: find and replace text, or append/prepend content."
+
+    @property
+    def input_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "file_path": {"type": "string", "description": "Path to file to modify in storage"},
+                "replacements": {
+                    "type": "object",
+                    "description": "Dictionary of target strings to replace with new strings (e.g. {'old_text': 'new_text'})",
+                },
+                "append_content": {
+                    "type": "string",
+                    "description": "Optional text to append to the end of the file",
+                },
+                "prepend_content": {
+                    "type": "string",
+                    "description": "Optional text to prepend to the beginning of the file",
+                },
+            },
+            "required": ["file_path"],
+        }
+
+    @property
+    def output_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "file_path": {"type": "string"},
+                "modifications_count": {"type": "integer"},
+                "sha256_hash": {"type": "string"},
+                "change_summary": {"type": "array", "items": {"type": "string"}},
+            },
+        }
+
+    @property
+    def permissions(self) -> List[ToolPermission]:
+        return [ToolPermission.STORAGE_READ, ToolPermission.STORAGE_WRITE]
+
+    async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
+        file_path_str = arguments.get("file_path", "")
+        replacements = arguments.get("replacements", {})
+        append_content = arguments.get("append_content")
+        prepend_content = arguments.get("prepend_content")
+
+        if not file_path_str or not isinstance(file_path_str, str):
+            return ToolResult(tool_name=self.name, success=False, error="Parameter 'file_path' is required.")
+
+        try:
+            safe_path = validate_safe_storage_path(file_path_str, must_exist=True)
+            text = safe_path.read_text(encoding="utf-8", errors="replace")
+
+            modifications_count = 0
+            change_summary: List[str] = []
+
+            if isinstance(replacements, dict):
+                for old_val, new_val in replacements.items():
+                    if old_val in text:
+                        count = text.count(old_val)
+                        text = text.replace(old_val, str(new_val))
+                        modifications_count += count
+                        change_summary.append(f"Replaced {count} occurrence(s) of '{old_val[:40]}' with '{str(new_val)[:40]}'")
+
+            if prepend_content:
+                text = f"{prepend_content}\n{text}"
+                modifications_count += 1
+                change_summary.append("Prepended text to file header.")
+
+            if append_content:
+                text = f"{text}\n{append_content}"
+                modifications_count += 1
+                change_summary.append("Appended text to file tail.")
+
+            raw_bytes = text.encode("utf-8")
+            safe_path.write_bytes(raw_bytes)
+            sha256 = hashlib.sha256(raw_bytes).hexdigest()
+
+            return ToolResult(
+                tool_name=self.name,
+                success=True,
+                output={
+                    "file_path": str(safe_path),
+                    "filename": safe_path.name,
+                    "modifications_count": modifications_count,
+                    "sha256_hash": sha256,
+                    "change_summary": change_summary,
+                },
+                metadata={"modifications": modifications_count, "sha256": sha256},
+            )
+        except Exception as e:
+            return ToolResult(tool_name=self.name, success=False, error=f"File modify failed: {str(e)}")
+

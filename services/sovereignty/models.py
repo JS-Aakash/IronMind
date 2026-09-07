@@ -50,4 +50,4 @@ class SovereigntyStatusResponse(BaseModel):
     local_model_calls: int = 18
     data_egress_bytes: int = 0
     measurement_breakdown: MeasurementBreakdown = Field(default_factory=MeasurementBreakdown)
-    last_verified_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    last_verified_at: str = Field(default_factory=lambda: datetime.now().isoformat())

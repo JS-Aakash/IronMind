@@ -73,7 +73,7 @@ class XlsxSpreadsheetGenerator(BaseArtifactGenerator):
                 col_letter = get_column_letter(col[0].column)
                 ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         clean_title = data.title.replace(" ", "_").replace("-", "_")
         filename = f"{clean_title}_{timestamp}.xlsx"
         file_path = output_dir / filename
@@ -88,7 +88,7 @@ class XlsxSpreadsheetGenerator(BaseArtifactGenerator):
             task_id=task_id or data.task_id,
             filename=filename,
             type="xlsx",
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now().isoformat(),
             source_documents=data.source_documents,
             models_used=data.models_used,
             verification_status="verified",

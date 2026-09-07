@@ -1,0 +1,36 @@
+MANGALORE REFINERY AND PETROCHEMICALS LIMITED (MRPL)
+ON-PREMISE EQUIPMENT CONDITION MONITORING & INSPECTION REPORT
+========================================================================
+REPORT ID: MRPL-IR-2026-0828-P101
+INSPECTION DATE: 28-AUG-2026
+EQUIPMENT TAG: P-101 (Centrifugal Slurry Transfer Pump)
+OPERATING UNIT: Crude Distillation Unit (CDU-1)
+INSPECTED BY: Senior Reliability Engineer (Vibration Analysis Cell)
+
+EMPIRICAL MEASUREMENTS & READINGS:
+------------------------------------------------------------------------
+1. Overall Vibration RMS Velocity:
+   - Drive-End (DE) Bearing (Horizontal): 4.8 mm/s  [HIGH / ZONE C]
+   - Drive-End (DE) Bearing (Vertical): 3.2 mm/s    [ACCEPTABLE / ZONE B]
+   - Non-Drive-End (NDE) Bearing (Axial): 2.4 mm/s  [GOOD / ZONE A]
+   - ISO 10816-3 Threshold for Zone B limit: 4.5 mm/s
+
+2. Operating Temperatures:
+   - DE Bearing Housing Temp: 78.5°C (Baseline: 62°C, Alarm Limit: 80°C)
+   - NDE Bearing Housing Temp: 65.0°C
+   - Motor Stator Winding Temp: 92.0°C (Class F Insulation)
+
+3. Pressures & Process Conditions:
+   - Suction Pressure: 2.1 bar
+   - Discharge Pressure: 12.4 bar
+   - Seal Flush Plan 53A Barrier Fluid Pressure: 1.8 bar
+
+4. VISUAL ABNORMALITIES OBSERVED:
+   - Drive-end mechanical seal primary face exhibiting minor fluid weeping (estimated 8-10 drops/min).
+   - Foundation mounting bolts baseline torque verified intact.
+   - FFT spectrum reveals prominent 1X (2980 RPM) and 2X running speed peaks indicating slight angular misalignment and inner race bearing fatigue.
+
+RECOMMENDED ACTION:
+- Prepare official MRPL Approval Note for priority work order issuance under SOP-MECH-4.2.
+- Authorize DE bearing replacement and mechanical seal overhaul during upcoming mini-turnaround window.
+========================================================================

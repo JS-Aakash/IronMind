@@ -47,11 +47,11 @@ class RoutingDecision(BaseModel):
     primary_model: str
     stage_models: Dict[str, str] = Field(default_factory=dict, description="Per-stage model allocation (e.g. vision -> qwen2.5vl:7b, reasoning -> qwen3:8b)")
     stages: List[StageRouting] = Field(default_factory=list)
-    required_capabilities: List[str]
-    candidate_scores: List[ModelScore]
+    required_capabilities: List[str] = Field(default_factory=list)
+    candidate_scores: List[ModelScore] = Field(default_factory=list)
     alternatives: List[str] = Field(default_factory=list)
     requires_sandbox: bool = False
     requires_rag: bool = False
     target_artifact: Optional[ArtifactType] = None
-    routing_reason: str
-    explanation: str
+    routing_reason: str = ""
+    explanation: str = ""

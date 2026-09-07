@@ -18,7 +18,7 @@ async def get_health(sovereignty_svc: SovereigntyService = Depends(get_sovereign
         "app_name": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "environment": settings.ENVIRONMENT,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now().isoformat(),
         "sovereignty": {
             "mode": "100% On-Premise Airgap",
             "cloud_egress": "BLOCKED",

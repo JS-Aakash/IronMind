@@ -1,4 +1,6 @@
-# Ignore Python artifacts
+# ==========================================
+# Byte-compiled / optimized / DLL files
+# ==========================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -19,43 +21,99 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# ==========================================
+# Virtual Environments & Caches
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
 .pytest_cache/
 .coverage
 htmlcov/
-.venv
-venv/
-ENV/
+*.tsbuildinfo
 
-# Ignore Node artifacts
+# ==========================================
+# Node / Frontend Artifacts
+# ==========================================
 node_modules/
+apps/frontend/node_modules/
 .next/
+apps/frontend/.next/
 out/
-build/
+apps/frontend/out/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# ==========================================
+# Environment Variables & Secrets
+# ==========================================
+.env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+*.pem
+*.key
 
-# Ignore environment variables
-.env
-
-# Storage contents (keep dirs via .gitkeep)
-storage/uploads/*
-!storage/uploads/.gitkeep
-storage/knowledge/*
-!storage/knowledge/.gitkeep
-storage/artifacts/*
-!storage/artifacts/.gitkeep
-storage/temp/*
-!storage/temp/.gitkeep
-
-# OS and IDE files
+# ==========================================
+# OS & IDE Settings
+# ==========================================
 .DS_Store
 Thumbs.db
+desktop.ini
 .vscode/
 .idea/
 *.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# ==========================================
+# Storage Management & Demo Preservation
+# ==========================================
+# Ignore ephemeral sandbox executions and temp files
+storage/temp/*
+!storage/temp/.gitkeep
+storage/sandbox/*
+!storage/sandbox/.gitkeep
+
+# Exclude user uploads during ad-hoc runs, preserve standard demo assets
+storage/uploads/*
+!storage/uploads/.gitkeep
+!storage/uploads/MRPL_Crude_Distillation_P101_PID.png
+!storage/uploads/MRPL_P101_Inspection_Data.xlsx
+!storage/uploads/MRPL_P101_Inspection_Scan.txt
+!storage/uploads/MRPL_Approval_Note_P_101_Sample.docx
+!storage/uploads/MRPL_Executive_Review_Sample.pptx
+
+# Track standard knowledge base documents and vector registry
+storage/knowledge/*
+!storage/knowledge/.gitkeep
+!storage/knowledge/*.pdf
+!storage/knowledge/*.txt
+!storage/knowledge/documents_registry.json
+!storage/knowledge/vector_index.json
+
+# Track standard deliverable registry and sample deliverables
+storage/artifacts/*
+!storage/artifacts/.gitkeep
+!storage/artifacts/registry.json
+!storage/artifacts/MRPL_Approval_Note_P_101_Sample.docx
+!storage/artifacts/MRPL_P101_Inspection_Data_Analysis.xlsx
+!storage/artifacts/iso13709_pump_hydraulics.py
+!storage/artifacts/MRPL_Executive_Review_Sample.pptx
+
+# Track flagship seed run, ignore ephemeral ad-hoc task runs
+storage/tasks/*
+!storage/tasks/.gitkeep
+!storage/tasks/TASK_FLAGSHIP_001.json
+
+# Track genesis audit ledger, ignore ephemeral task audit files
+storage/audit/tasks/*
+!storage/audit/tasks/.gitkeep
+storage/audit/*.jsonl
+!storage/audit/audit_ledger.jsonl

@@ -1,0 +1,19 @@
+MANGALORE REFINERY AND PETROCHEMICALS LIMITED (MRPL)
+TECHNICAL MANUAL: API 610 BB2 CENTRIFUGAL SLURRY PUMPS
+DOCUMENT CODE: MRPL-ENG-MAN-610-PUMPS
+CLASSIFICATION: Confidential Engineering Reference
+
+1. HYDRAULIC EQUATIONS & EFFICIENCY FORMULAS:
+- Hydraulic Power Calculation (kW):
+  P_hyd = (density_kg_m3 * g * Q_m3_h * H_m) / (3600 * 1000)
+  where g = 9.81 m/s²
+
+- Mechanical/Overall Pump Efficiency (%):
+  Efficiency = (P_hyd / P_input_kW) * 100
+
+2. OPERATIONAL LIMITS:
+- Minimum Continuous Stable Flow (MCSF): 35% of Best Efficiency Point (BEP).
+- Maximum Allowable Working Pressure (MAWP): 25.0 bar at 150°C.
+- Design Service: Bottom Slurry Transfer Pump P-101A/B.
+- Drive End Bearing Type: SKF Explorer Deep Groove Ball Bearing 6314 C3.
+- Non-Drive End Bearing Type: SKF Duplex Angular Contact 7314 BECBM.

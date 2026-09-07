@@ -37,7 +37,7 @@ class SpreadsheetCreateTool(BaseTool):
         return [ToolPermission.DOCUMENT_GENERATE, ToolPermission.STORAGE_WRITE]
 
     async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
-        filename = arguments.get("filename", f"data_sheet_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv")
+        filename = arguments.get("filename", f"data_sheet_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
         headers = arguments.get("headers", [])
         rows = arguments.get("rows", [])
 
@@ -110,11 +110,11 @@ class PresentationCreateTool(BaseTool):
     async def execute(self, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> ToolResult:
         title = arguments.get("title", "Executive Engineering Review")
         slides = arguments.get("slides", [])
-        filename = f"MRPL_Deck_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"MRPL_Deck_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
         try:
             safe_path = validate_safe_storage_path(f"storage/artifacts/{filename}", allow_creation_in="storage/artifacts")
-            payload = {"title": title, "slides": slides, "generated_at": datetime.utcnow().isoformat()}
+            payload = {"title": title, "slides": slides, "generated_at": datetime.now().isoformat()}
             content = json.dumps(payload, indent=2)
             safe_path.write_text(content, encoding="utf-8")
             sha256 = hashlib.sha256(content.encode("utf-8")).hexdigest()
@@ -166,7 +166,7 @@ class PdfCreateTool(BaseTool):
         title = arguments.get("title", "MRPL Inspection Report")
         content_md = arguments.get("content_markdown", "")
         eq_tag = arguments.get("equipment_tag", "EQUIPMENT")
-        filename = f"MRPL_Report_{eq_tag.replace('-', '_')}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf.txt"
+        filename = f"MRPL_Report_{eq_tag.replace('-', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf.txt"
 
         try:
             safe_path = validate_safe_storage_path(f"storage/artifacts/{filename}", allow_creation_in="storage/artifacts")

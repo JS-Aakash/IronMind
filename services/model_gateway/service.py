@@ -74,14 +74,38 @@ class ModelService:
         provider = self.get_provider(model_def.provider)
         return model_def, provider
 
+    async def generate(
+        self,
+        model: str,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        temperature: float = 0.2,
+        max_tokens: Optional[int] = 4096,
+        stop_sequences: Optional[List[str]] = None,
+        think: Optional[bool] = False,
+        **kwargs,
+    ) -> GenerationResponse:
+        """Universal text generation alias forwarding to generate_text."""
+        return await self.generate_text(
+            model=model,
+            prompt=prompt,
+            system_prompt=system_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stop_sequences=stop_sequences,
+            think=think,
+            **kwargs,
+        )
+
     async def generate_text(
         self,
         model: str,
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: float = 0.2,
-        max_tokens: Optional[int] = 2048,
+        max_tokens: Optional[int] = 4096,
         stop_sequences: Optional[List[str]] = None,
+        think: Optional[bool] = False,
         **kwargs,
     ) -> GenerationResponse:
         """Generate text completion through the local model gateway."""
@@ -94,6 +118,7 @@ class ModelService:
             temperature=temperature,
             max_tokens=max_tokens,
             stop_sequences=stop_sequences,
+            think=think,
             **kwargs,
         )
 
@@ -104,7 +129,8 @@ class ModelService:
         schema_definition: Optional[Dict] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.1,
-        max_tokens: Optional[int] = 2048,
+        max_tokens: Optional[int] = 4096,
+        think: Optional[bool] = False,
         **kwargs,
     ) -> GenerationResponse:
         """Generate structured JSON adhering to requested schema."""
@@ -117,6 +143,7 @@ class ModelService:
             system_prompt=system_prompt,
             temperature=temperature,
             max_tokens=max_tokens,
+            think=think,
             **kwargs,
         )
 
@@ -128,7 +155,8 @@ class ModelService:
         image_base64: Optional[str] = None,
         system_prompt: Optional[str] = None,
         temperature: float = 0.1,
-        max_tokens: Optional[int] = 2048,
+        max_tokens: Optional[int] = 4096,
+        think: Optional[bool] = False,
         **kwargs,
     ) -> GenerationResponse:
         """Multimodal visual inspection of drawings, photographs, people, equipment, or scanned reports."""
@@ -142,6 +170,7 @@ class ModelService:
             system_prompt=system_prompt,
             temperature=temperature,
             max_tokens=max_tokens,
+            think=think,
             **kwargs,
         )
 
@@ -151,7 +180,8 @@ class ModelService:
         prompt: str,
         system_prompt: Optional[str] = None,
         temperature: float = 0.2,
-        max_tokens: Optional[int] = 2048,
+        max_tokens: Optional[int] = 4096,
+        think: Optional[bool] = False,
         **kwargs,
     ) -> AsyncIterator[StreamChunk]:
         """Stream generated token chunks."""
@@ -163,6 +193,7 @@ class ModelService:
             system_prompt=system_prompt,
             temperature=temperature,
             max_tokens=max_tokens,
+            think=think,
             **kwargs,
         ):
             yield chunk
@@ -309,7 +340,37 @@ class ModelService:
                 "is_loading": is_loading,
                 "vram_usage_mb": vram_mb if vram_mb > 0 else (est_vram if (is_warm or is_loading) else 0),
                 "expires_at": m_info.get("expires_at") if m_info else None,
+                "is_custom": False,
             })
+
+        # Also include any custom registered models from registry
+        primary_ids = {r["id"] for r in result}
+        for extra_m in self.registry.list_models():
+            if extra_m.name not in primary_ids and not any(self._model_matches(extra_m.name, pid) for pid in primary_ids):
+                m_info = None
+                for m in running_models:
+                    if self._model_matches(extra_m.name, m.get("name", "")):
+                        m_info = m
+                        break
+                is_warm = m_info is not None
+                is_loading = self._loading_model_id is not None and self._model_matches(self._loading_model_id, extra_m.name)
+                vram_mb = int(m_info.get("size_vram", 0) / (1024 * 1024)) if (m_info and m_info.get("size_vram")) else 0
+                status_str = "LOADING" if is_loading else ("LOADED • WARM" if is_warm else "UNLOADED")
+                result.append({
+                    "id": extra_m.name,
+                    "name": extra_m.name,
+                    "display_name": extra_m.display_name,
+                    "description": extra_m.description or f"Custom local model ({extra_m.name})",
+                    "role": extra_m.role.value if hasattr(extra_m.role, "value") else str(extra_m.role),
+                    "role_title": "Custom Specialist",
+                    "status": status_str,
+                    "is_warm": is_warm or is_loading,
+                    "is_loading": is_loading,
+                    "vram_usage_mb": vram_mb if vram_mb > 0 else (extra_m.vram_estimate_mb if (is_warm or is_loading) else 0),
+                    "expires_at": m_info.get("expires_at") if m_info else None,
+                    "is_custom": True,
+                    "enabled": extra_m.enabled,
+                })
 
         return result
 

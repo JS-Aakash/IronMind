@@ -257,7 +257,7 @@ class PresentationModifyPptxTool(BaseTool):
                     change_summary.append(f"Edited slide {s_idx + 1}: replaced {replaced} text string(s).")
 
         # Save Updated Presentation
-        timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = safe_path.stem.replace(" ", "_")
         out_filename = custom_out_filename or f"{base_name}_updated_{timestamp_str}.pptx"
         if not out_filename.endswith(".pptx"):
@@ -281,7 +281,7 @@ class PresentationModifyPptxTool(BaseTool):
                 "task_id": task_id,
                 "filename": out_filename,
                 "type": "pptx",
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now().isoformat(),
                 "source_documents": [safe_path.name],
                 "models_used": ["qwen3:8b"],
                 "verification_status": "verified",

@@ -105,6 +105,24 @@ def test_agent_verifier_validation():
     assert len(res.findings) >= 2
 
 
+def test_agent_verifier_retry_recovery():
+    verifier = AgentVerifier()
+    # Tool initially failed on attempt 1, but recovered and passed on attempt 2 (self-repair)
+    tool_results = [
+        {"tool_name": "python.execute_sandbox", "success": False, "error": "AssertionError: math.isclose mismatch"},
+        {"tool_name": "python.execute_sandbox", "success": True, "error": None},
+    ]
+    res = verifier.verify_execution(
+        task_type="coding",
+        observations=["Obs 1", "Obs 2"],
+        tool_results=tool_results,
+        generated_artifacts=[{"filename": "verified_script.py", "sha256_hash": "1234567890abcdef"}],
+    )
+    assert res.passed is True
+    assert len(res.errors) == 0
+    assert any("autonomously recovered" in f for f in res.findings)
+
+
 @pytest.fixture
 def mock_agent_service():
     mock_provider = MockProvider()

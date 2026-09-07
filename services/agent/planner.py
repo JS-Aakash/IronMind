@@ -74,6 +74,9 @@ class AgentPlanner:
         is_file_op = any(
             k in goal_lower for k in ["copy file", "rename file", "read file", "write file", "backup file"]
         )
+        is_pid_workflow = any(
+            k in goal_lower for k in ["p&id", "pid", "piping and instrument", "piping & instrument", "engineering drawing", "schematic diagram"]
+        ) or (has_image_file and any(k in primary_file.lower() for k in ["pid", "drawing", "schematic"]))
 
         # =========================================================================
         # 1. SPREADSHEET AGENT WORKFLOW
@@ -371,9 +374,37 @@ class AgentPlanner:
             ]
 
         # =========================================================================
-        # 6. GENERAL MULTIMODAL VISUAL UNDERSTANDING (Image QA)
+        # 6. P&ID MULTIMODAL ENGINEERING DRAWING WORKFLOW (ISA-5.1 Intelligence)
         # =========================================================================
-        elif has_image_file and not requires_approval_note and not any(k in goal_lower for k in ["p&id", "pid", "schematic"]):
+        elif is_pid_workflow:
+            target_pid = primary_file if has_image_file else "MRPL_Crude_Distillation_P101_PID.png"
+            plan = [
+                PlanStep(
+                    step_id=generate_uuid("STEP"),
+                    order=1,
+                    title="Multimodal P&ID Drawing Extraction (Qwen2.5-VL)",
+                    description=f"Inspect '{target_pid}' with Qwen2.5-VL to extract ISA-5.1 equipment tags, instrument loops, process lines, and safety interlocks.",
+                    tool_name="vision.pid_analyze",
+                    tool_args={"file_path": target_pid, "focus_equipment": "All", "prompt": goal},
+                    assigned_model=routing.stage_models.get("vision", "qwen2.5vl:7b"),
+                    status=AgentStatus.PENDING,
+                ),
+                PlanStep(
+                    step_id=generate_uuid("STEP"),
+                    order=2,
+                    title="Process Safety & Connectivity Schema Synthesis",
+                    description="Synthesize control loop relationships, verify interlock SIL compliance, and formulate plant connectivity matrix.",
+                    tool_name=None,
+                    tool_args={},
+                    assigned_model=routing.stage_models.get("reasoning", "qwen3:8b"),
+                    status=AgentStatus.PENDING,
+                ),
+            ]
+
+        # =========================================================================
+        # 7. GENERAL MULTIMODAL VISUAL UNDERSTANDING (Image QA)
+        # =========================================================================
+        elif has_image_file and not requires_approval_note:
             plan = [
                 PlanStep(
                     step_id=generate_uuid("STEP"),

@@ -53,7 +53,7 @@ class PptxPresentationGenerator(BaseArtifactGenerator):
             p_sub.font.color.rgb = RGBColor(14, 165, 233)
 
         p_meta = tf.add_paragraph()
-        p_meta.text = f"\nMANGALORE REFINERY AND PETROCHEMICALS LIMITED | {datetime.utcnow().strftime('%B %Y')}"
+        p_meta.text = f"\nMANGALORE REFINERY AND PETROCHEMICALS LIMITED | {datetime.now().strftime('%B %Y')}"
         p_meta.font.size = Pt(12)
         p_meta.font.color.rgb = RGBColor(100, 116, 139)
 
@@ -83,7 +83,7 @@ class PptxPresentationGenerator(BaseArtifactGenerator):
                 p.font.color.rgb = RGBColor(51, 65, 85)
                 p.space_after = Pt(14)
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         clean_title = data.title.replace(" ", "_").replace("-", "_")
         filename = f"{clean_title}_{timestamp}.pptx"
         file_path = output_dir / filename
@@ -98,7 +98,7 @@ class PptxPresentationGenerator(BaseArtifactGenerator):
             task_id=task_id or data.task_id,
             filename=filename,
             type="pptx",
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now().isoformat(),
             source_documents=data.source_documents,
             models_used=data.models_used,
             verification_status="verified",

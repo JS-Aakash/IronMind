@@ -95,21 +95,25 @@ class OllamaProvider(ModelProvider):
             "prompt": prompt,
             "stream": False,
             "keep_alive": -1,
+            "think": kwargs.get("think", False),
             "options": {
                 "temperature": temperature,
+                "num_predict": max_tokens if max_tokens is not None else 4096,
+                "num_thread": 8,
+                "repeat_penalty": 1.1,
+                "top_p": 0.9,
+                "top_k": 40,
             },
         }
 
         if "0.6b" in model.lower():
             payload["options"]["num_gpu"] = 0
-            payload["options"]["num_ctx"] = 2048
+            payload["options"]["num_ctx"] = 4096
         else:
-            payload["options"].setdefault("num_ctx", 2048)
+            payload["options"].setdefault("num_ctx", 8192)
 
         if system_prompt:
             payload["system"] = system_prompt
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
         if stop_sequences:
             payload["options"]["stop"] = stop_sequences
 
@@ -179,12 +183,21 @@ class OllamaProvider(ModelProvider):
             "system": system_instruction.strip(),
             "format": "json",
             "stream": False,
+            "keep_alive": -1,
+            "think": kwargs.get("think", False),
             "options": {
                 "temperature": temperature,
+                "num_predict": max_tokens if max_tokens is not None else 4096,
+                "num_thread": 8,
+                "repeat_penalty": 1.1,
+                "top_p": 0.9,
             },
         }
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
+        if "0.6b" in model.lower():
+            payload["options"]["num_gpu"] = 0
+            payload["options"]["num_ctx"] = 4096
+        else:
+            payload["options"].setdefault("num_ctx", 8192)
 
         try:
             async with httpx.AsyncClient(timeout=self._timeout_config) as client:
@@ -245,14 +258,19 @@ class OllamaProvider(ModelProvider):
             "prompt": prompt,
             "images": encoded_images,
             "stream": False,
+            "keep_alive": -1,
+            "think": kwargs.get("think", False),
             "options": {
                 "temperature": temperature,
+                "num_predict": max_tokens if max_tokens is not None else 4096,
+                "num_thread": 8,
+                "repeat_penalty": 1.1,
+                "top_p": 0.9,
             },
         }
+        payload["options"].setdefault("num_ctx", 8192)
         if system_prompt:
             payload["system"] = system_prompt
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
 
         try:
             async with httpx.AsyncClient(timeout=self._timeout_config) as client:
@@ -306,14 +324,24 @@ class OllamaProvider(ModelProvider):
             "model": model,
             "prompt": prompt,
             "stream": True,
+            "keep_alive": -1,
+            "think": kwargs.get("think", False),
             "options": {
                 "temperature": temperature,
+                "num_predict": max_tokens if max_tokens is not None else 4096,
+                "num_thread": 8,
+                "repeat_penalty": 1.1,
+                "top_p": 0.9,
             },
         }
+        if "0.6b" in model.lower():
+            payload["options"]["num_gpu"] = 0
+            payload["options"]["num_ctx"] = 4096
+        else:
+            payload["options"].setdefault("num_ctx", 8192)
+
         if system_prompt:
             payload["system"] = system_prompt
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
 
         images = kwargs.get("images") or kwargs.get("image_base64")
         if images:
@@ -338,7 +366,7 @@ class OllamaProvider(ModelProvider):
                         try:
                             chunk_data = json.loads(line)
                             chunk_text = chunk_data.get("response", "")
-                            if not chunk_text and chunk_data.get("thinking"):
+                            if not chunk_text and kwargs.get("think", False) and chunk_data.get("thinking"):
                                 chunk_text = chunk_data.get("thinking", "")
                             is_done = chunk_data.get("done", False)
                             accumulated_len += len(chunk_text)

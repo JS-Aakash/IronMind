@@ -1,0 +1,130 @@
+{
+  "documents": [
+    {
+      "id": "doc_sop_p101",
+      "title": "MRPL Standard Operating Procedure: Centrifugal Pump P-101 Maintenance",
+      "filename": "MRPL_SOP_P101_Pump_Maintenance.pdf",
+      "file_type": "PDF",
+      "category": "SOP",
+      "chunk_count": 3,
+      "uploaded_at": "2026-09-04 09:50:59",
+      "size_bytes": 3072,
+      "ai_description": "Standard operating procedure detailing maintenance thresholds, vibration severity levels (ISO 10816 Zone B <= 4.5 mm/s RMS), bearing temperature caps (82\u00b0C / 180\u00b0F), and mechanical seal leakage criteria (Plan 53B) for refinery centrifugal pump P-101.",
+      "key_topics": [
+        "Centrifugal Pump",
+        "Vibration Limits (ISO 10816)",
+        "Bearing Temp <= 82\u00b0C",
+        "Mechanical Seal Plan 53B",
+        "Refinery SOP"
+      ]
+    },
+    {
+      "id": "doc_pid_ref_refinery",
+      "title": "MRPL Crude Distillation Unit (CDU-1) P&ID Standard Symbols Manual",
+      "filename": "MRPL_CDU1_PID_Engineering_Manual.pdf",
+      "file_type": "PDF",
+      "category": "Engineering Manual",
+      "chunk_count": 2,
+      "uploaded_at": "2026-09-04 09:50:59",
+      "size_bytes": 2048,
+      "ai_description": "Crude Distillation Unit (CDU-1) P&ID engineering manual defining instrumentation tags (PT-101, PT-102, FT-101), 100% duty-standby pump configurations, motorized isolation valves, and thermal overpressure relief setpoints (16.5 bar).",
+      "key_topics": [
+        "P&ID Instrumentation",
+        "Pressure Transmitters (PT-101)",
+        "Ultrasonic Flow (FT-101)",
+        "Duty-Standby (P-101A/B)",
+        "Thermal Relief (PSV-102)"
+      ]
+    },
+    {
+      "id": "doc_api_610_standards",
+      "title": "API Standard 610: Centrifugal Pumps for Petroleum, Petrochemical and Natural Gas Industries",
+      "filename": "API_610_Centrifugal_Pump_Standards.pdf",
+      "file_type": "PDF",
+      "category": "Standard",
+      "chunk_count": 2,
+      "uploaded_at": "2026-09-04 09:50:59",
+      "size_bytes": 2048,
+      "ai_description": "API Standard 610 specification covering hydraulic design requirements, preferred operating region (70%-120% BEP), minimum continuous stable flow (MCSF 30%), and 82\u00b0C hydrodynamic/rolling bearing thermal thresholds.",
+      "key_topics": [
+        "API 610 Standard",
+        "Preferred Operating Region",
+        "Best Efficiency Point (BEP)",
+        "MCSF 30%",
+        "Bearing Temp 82\u00b0C"
+      ]
+    },
+    {
+      "id": "doc_inspection_api510",
+      "title": "Industrial Equipment Pressure Vessel Inspection Standards (API 510)",
+      "filename": "API_510_Pressure_Vessel_Standards.pdf",
+      "file_type": "PDF",
+      "category": "Standard",
+      "chunk_count": 1,
+      "uploaded_at": "2026-09-04 09:50:59",
+      "size_bytes": 1024,
+      "ai_description": "API 510 in-service inspection code for pressure vessels specifying non-destructive examination (NDE), 4-quadrant ultrasonic thickness inspection, and corrosion monitoring.",
+      "key_topics": [
+        "API 510 Code",
+        "Pressure Vessels",
+        "Ultrasonic Thickness",
+        "Non-Destructive Testing",
+        "Corrosion Monitoring"
+      ]
+    },
+    {
+      "id": "doc_mrpl_sop_mech_4_2",
+      "title": "MRPL SOP MECH 4.2 Centrifugal Pump Vibration & Overhaul",
+      "filename": "MRPL_SOP_MECH_4_2_Vibration_Overhaul.txt",
+      "file_type": "TXT",
+      "category": "SOP",
+      "chunk_count": 3,
+      "uploaded_at": "2026-09-05 18:52:26",
+      "size_bytes": 2147,
+      "ai_description": "This document establishes vibration velocity thresholds, bearing temperature thresholds, and mechanical seal inspection criteria for API 610 centrifugal pumps in MRPL. It outlines permissible vibration limits, seal inspection requirements, and overhaul protocols.",
+      "key_topics": [
+        "vibration thresholds",
+        "bearing temperature",
+        "mechanical seal inspection",
+        "overhaul triggers"
+      ]
+    },
+    {
+      "id": "doc_mrpl_esd101",
+      "title": "MRPL ESD-101 Valve Safety Standard",
+      "filename": "MRPL_ESD101_Safety_Standard.txt",
+      "file_type": "TXT",
+      "category": "Safety Standard",
+      "chunk_count": 1,
+      "uploaded_at": "2026-09-06 10:30:12",
+      "size_bytes": 152,
+      "ai_description": "This document specifies that emergency shutdown valves (ESD-101) must close within 2.5 seconds upon activation of the High-High Pressure Alarm (PAHH-101).",
+      "key_topics": [
+        "Safety Standards",
+        "Emergency Shutdown Valves",
+        "High-High Pressure Alarm",
+        "Closing Time"
+      ]
+    },
+    {
+      "id": "doc_mrpl_flaring",
+      "title": "MRPL Flaring Manual",
+      "filename": "MRPL_Flaring_Manual.txt",
+      "file_type": "TXT",
+      "category": "Environmental Standard",
+      "chunk_count": 1,
+      "uploaded_at": "2026-09-06 10:30:19",
+      "size_bytes": 85,
+      "ai_description": "This document specifies the maximum smokeless flaring rate of 120 tons/hour and outlines process parameters for the MRPL refinery flaring system.",
+      "key_topics": [
+        "flaring",
+        "smokeless",
+        "rate",
+        "efficiency",
+        "safety"
+      ]
+    }
+  ],
+  "total": 7,
+  "updated_at": "2026-09-06T18:15:46.885418"
+}

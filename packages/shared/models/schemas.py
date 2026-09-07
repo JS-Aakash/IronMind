@@ -106,12 +106,12 @@ class SovereigntyMetrics(BaseModel):
     local_tool_executions_count: int = 0
     sandbox_runs_count: int = 0
     active_connections: int = 0
-    last_audit_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    last_audit_timestamp: datetime = Field(default_factory=datetime.now)
 
 
 class AuditLogEntry(BaseModel):
     id: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=datetime.now)
     level: str = "INFO"
     event_type: str
     source_service: str

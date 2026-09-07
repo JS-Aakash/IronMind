@@ -238,3 +238,18 @@ class ModelRegistry:
             model.enabled = enabled
             return model
         return None
+
+    def unregister_model(self, name: str) -> bool:
+        """Unregister or remove a model definition from the registry."""
+        clean = name.strip()
+        matched_key = None
+        for k in self._models:
+            if k.lower() == clean.lower():
+                matched_key = k
+                break
+        if matched_key:
+            del self._models[matched_key]
+            logger.info("Unregistered model definition: %s", matched_key)
+            return True
+        return False
+

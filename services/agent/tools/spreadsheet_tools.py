@@ -588,7 +588,7 @@ class SpreadsheetModifyTool(BaseTool):
                 # Subtitle / Timestamp
                 ws_sum.merge_cells("A3:E3")
                 sub_cell = ws_sum["A3"]
-                sub_cell.value = f"SOVEREIGN ON-PREMISE AI SYNTHESIS | GENERATED: {datetime.utcnow().strftime('%d-%b-%Y %H:%M UTC')} | STATUS: VERIFIED"
+                sub_cell.value = f"SOVEREIGN ON-PREMISE AI SYNTHESIS | GENERATED: {datetime.now().strftime('%d-%b-%Y %H:%M')} | STATUS: VERIFIED"
                 sub_cell.fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
                 sub_cell.font = Font(name="Calibri", size=9, bold=True, color="94A3B8")
                 sub_cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -713,7 +713,7 @@ class SpreadsheetModifyTool(BaseTool):
                 sheet.column_dimensions[col_letter].width = max(min(max_len + 4, 45), 12)
 
         # Save updated workbook
-        timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         base_name = safe_path.stem.replace(" ", "_")
         out_filename = custom_output_filename or f"{base_name}_updated_{timestamp_str}.xlsx"
         if not out_filename.endswith(".xlsx"):
@@ -740,7 +740,7 @@ class SpreadsheetModifyTool(BaseTool):
                 "task_id": task_id,
                 "filename": out_filename,
                 "type": "xlsx",
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now().isoformat(),
                 "source_documents": [safe_path.name],
                 "models_used": ["qwen3:8b", "qwen2.5-coder:7b"],
                 "verification_status": "verified",

@@ -39,5 +39,6 @@ __all__ = [
     "PresentationCreateTool",
     "PdfCreateTool",
     "VisionAnalyzeTool",
+    "PidAnalyzeTool",
 ]
-from services.agent.tools.vision_tools import VisionAnalyzeTool
+from services.agent.tools.vision_tools import PidAnalyzeTool, VisionAnalyzeTool

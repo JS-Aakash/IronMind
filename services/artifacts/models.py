@@ -141,7 +141,7 @@ class GeneratedArtifactRecord(BaseModel):
     task_id: Optional[str] = None
     filename: str
     type: str  # "docx" | "xlsx" | "pptx" | "pdf" | "python" | "text"
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now().isoformat())
     source_documents: List[str] = Field(default_factory=list)
     models_used: List[str] = Field(default_factory=list)
     verification_status: str = "verified"

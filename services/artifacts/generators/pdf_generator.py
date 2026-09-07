@@ -29,7 +29,7 @@ class PdfReportGenerator(BaseArtifactGenerator):
         from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
         from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         tag_clean = data.equipment_tag.replace("-", "_").replace(" ", "_")
         filename = f"MRPL_Report_{tag_clean}_{timestamp}.pdf"
         file_path = output_dir / filename
@@ -72,7 +72,7 @@ class PdfReportGenerator(BaseArtifactGenerator):
         elements = [
             Paragraph(f"<b>{data.title}</b>", title_style),
             Paragraph(
-                f"EQUIPMENT: {data.equipment_tag} | GENERATED ON-PREMISE: {datetime.utcnow().strftime('%d-%b-%Y %H:%M:%S UTC')}",
+                f"EQUIPMENT: {data.equipment_tag} | GENERATED ON-PREMISE: {datetime.now().strftime('%d-%b-%Y %H:%M:%S')}",
                 subtitle_style,
             ),
             Spacer(1, 10),
@@ -112,7 +112,7 @@ class PdfReportGenerator(BaseArtifactGenerator):
             task_id=task_id or data.task_id,
             filename=filename,
             type="pdf",
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now().isoformat(),
             source_documents=data.source_documents,
             models_used=data.models_used,
             verification_status="verified",

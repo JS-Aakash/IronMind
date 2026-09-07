@@ -35,7 +35,7 @@ class SourceCodeArtifactGenerator(BaseArtifactGenerator):
         output_dir: Path,
         task_id: Optional[str] = None,
     ) -> GeneratedArtifactRecord:
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         stem = Path(data.filename).stem
         ext = Path(data.filename).suffix or ".py"
         filename = f"{stem}_{timestamp}{ext}"
@@ -52,7 +52,7 @@ class SourceCodeArtifactGenerator(BaseArtifactGenerator):
             task_id=task_id or data.task_id,
             filename=filename,
             type="python" if ext == ".py" else ext.lstrip("."),
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now().isoformat(),
             source_documents=data.source_documents,
             models_used=data.models_used,
             verification_status=data.verification_status,

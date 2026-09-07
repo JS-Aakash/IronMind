@@ -146,11 +146,11 @@ class DocxApprovalNoteGenerator(BaseArtifactGenerator):
 
             c1 = sig_table.cell(1, col_idx)
             p_p = c1.paragraphs[0]
-            p_p.add_run(f"\n[DIGITALLY VERIFIED]\n{person}\nDate: {datetime.utcnow().strftime('%d-%b-%Y')}")
+            p_p.add_run(f"\n[DIGITALLY VERIFIED]\n{person}\nDate: {datetime.now().strftime('%d-%b-%Y')}")
             p_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
         # 10. Save to Disk
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         tag_clean = data.equipment_tag.replace("-", "_").replace(" ", "_")
         filename = f"MRPL_Approval_Note_{tag_clean}_{timestamp}.docx"
         file_path = output_dir / filename
@@ -165,7 +165,7 @@ class DocxApprovalNoteGenerator(BaseArtifactGenerator):
             task_id=task_id or data.task_id,
             filename=filename,
             type="docx",
-            created_at=datetime.utcnow().isoformat(),
+            created_at=datetime.now().isoformat(),
             source_documents=data.source_documents,
             models_used=data.models_used,
             verification_status="verified",

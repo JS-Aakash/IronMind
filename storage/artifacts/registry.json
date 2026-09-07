@@ -1,0 +1,197 @@
+{
+  "artifacts": [
+    {
+      "artifact_id": "ART_MRPL_DOCX_001",
+      "task_id": "TASK_FLAGSHIP_004",
+      "filename": "MRPL_Approval_Note_P_101_Sample.docx",
+      "type": "docx",
+      "created_at": "2026-09-06T18:01:46.830883",
+      "source_documents": [
+        "MRPL_P101_Inspection_Scan.txt",
+        "MRPL_SOP_MECH_4_2_Vibration_Overhaul.txt"
+      ],
+      "models_used": [
+        "qwen3:8b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "a794d3a4511446ae0dacd8f1f1e04bf5506269d9220421bb3857258ca88b45aa",
+      "size_bytes": 37122,
+      "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_Sample.docx",
+      "download_url": "/api/v1/artifacts/ART_MRPL_DOCX_001/download",
+      "metadata": {
+        "equipment_tag": "P-101",
+        "subject": "Approval for Overhaul and Seal Replacement - Pump P-101",
+        "sop_reference": "MRPL SOP Section 4.2"
+      }
+    },
+    {
+      "artifact_id": "ART_MRPL_XLSX_001",
+      "task_id": "TASK_FLAGSHIP_002",
+      "filename": "MRPL_P101_Inspection_Data_Analysis.xlsx",
+      "type": "xlsx",
+      "created_at": "2026-09-06T18:04:46.858415",
+      "source_documents": [
+        "MRPL_P101_Inspection_Data.xlsx"
+      ],
+      "models_used": [
+        "qwen3:8b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "222c5936fac781653dfcf444ab1f27c27eb149c03946fa332a4a2a9e3ccf29cf",
+      "size_bytes": 5299,
+      "file_path": "storage\\artifacts\\MRPL_P101_Inspection_Data_Analysis.xlsx",
+      "download_url": "/api/v1/artifacts/ART_MRPL_XLSX_001/download",
+      "metadata": {
+        "equipment_tag": "CDU-1 Fleet",
+        "subject": "Fleet Vibration Threshold Analysis & KPI Summary",
+        "standard": "ISO 10816-3"
+      }
+    },
+    {
+      "artifact_id": "ART_MRPL_CODE_001",
+      "task_id": "TASK_FLAGSHIP_001",
+      "filename": "iso13709_pump_hydraulics.py",
+      "type": "code",
+      "created_at": "2026-09-06T18:10:46.860427",
+      "source_documents": [
+        "ISO 13709 / API 610 Standards"
+      ],
+      "models_used": [
+        "qwen2.5-coder:7b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "18cb2ff7ee1292fa7e8464b54c160c03158949748ddfa06cb62c3cf892c99b36",
+      "size_bytes": 1339,
+      "file_path": "storage\\artifacts\\iso13709_pump_hydraulics.py",
+      "download_url": "/api/v1/artifacts/ART_MRPL_CODE_001/download",
+      "metadata": {
+        "language": "python",
+        "standards": "ISO 13709 / API 610",
+        "test_assertions": "PASSED (100%)",
+        "exit_code": 0
+      }
+    },
+    {
+      "artifact_id": "ART_MRPL_PPTX_001",
+      "task_id": "TASK_FLAGSHIP_003",
+      "filename": "MRPL_Executive_Review_Sample.pptx",
+      "type": "pptx",
+      "created_at": "2026-09-06T18:07:46.863420",
+      "source_documents": [
+        "MRPL P&ID CDU-01 Review"
+      ],
+      "models_used": [
+        "qwen2.5vl:7b",
+        "qwen3:8b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "5e64c191c20112afcd7116e437f1575e84151feb1f436302b2666e1422b7b2fb",
+      "size_bytes": 28290,
+      "file_path": "storage\\artifacts\\MRPL_Executive_Review_Sample.pptx",
+      "download_url": "/api/v1/artifacts/ART_MRPL_PPTX_001/download",
+      "metadata": {
+        "unit": "CDU-1",
+        "subject": "Executive Plant Reliability & P&ID Asset Review"
+      }
+    },
+    {
+      "artifact_id": "ART_8b297020",
+      "task_id": "TEST_REPAIR_01",
+      "filename": "verified_script.py",
+      "type": "python",
+      "created_at": "2026-09-06T18:16:02.329695",
+      "source_documents": [],
+      "models_used": [],
+      "verification_status": "VERIFIED_PASSED",
+      "verified": true,
+      "sha256_hash": "ce67e732c1b47006e3d2b96bce852e899a28dca0ad1e7d540afaa709e1cd188f",
+      "size_bytes": 68,
+      "file_path": "storage\\artifacts\\verified_script.py",
+      "download_url": "/api/v1/artifacts/ART_8b297020/download",
+      "metadata": {}
+    },
+    {
+      "artifact_id": "ART_b6295da4",
+      "task_id": "TASK_6bdd735a",
+      "filename": "verified_script.py",
+      "type": "python",
+      "created_at": "2026-09-06T18:23:55.387635",
+      "source_documents": [],
+      "models_used": [],
+      "verification_status": "VERIFIED_PASSED",
+      "verified": true,
+      "sha256_hash": "3829e68856a8936de98691011b5f47ba97a8433f4341cb4828492fcb28b8b0b4",
+      "size_bytes": 1729,
+      "file_path": "storage\\artifacts\\verified_script.py",
+      "download_url": "/api/v1/artifacts/ART_b6295da4/download",
+      "metadata": {}
+    },
+    {
+      "artifact_id": "ART_9f44f618",
+      "task_id": "TASK_ab861160",
+      "filename": "MRPL_P101_Inspection_Data_updated_20260906_182522.xlsx",
+      "type": "xlsx",
+      "created_at": "2026-09-06T18:25:22.434411",
+      "source_documents": [
+        "MRPL_P101_Inspection_Data.xlsx"
+      ],
+      "models_used": [
+        "qwen3:8b",
+        "qwen2.5-coder:7b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "1b87db4ef67d85792537518bf8ee965db1a725278211e2479d40943ef4099ade",
+      "size_bytes": 6894,
+      "file_path": "storage\\artifacts\\MRPL_P101_Inspection_Data_updated_20260906_182522.xlsx",
+      "download_url": "/api/v1/artifacts/ART_9f44f618/download",
+      "metadata": {
+        "sheets_affected": [
+          "Vibration_Readings",
+          "KPI Summary"
+        ],
+        "change_summary": [
+          "Evaluated 8 rows in 'Vibration_Readings'. Flagged 2 abnormal asset(s) exceeding threshold (Measured RMS (mm/s) > 4.5).",
+          "Added column 'Hydraulic_Load_kW' to sheet 'Vibration_Readings' (8 rows populated). Applied formula: '=ROUND(15.634, 2)'",
+          "Created dedicated executive summary sheet 'KPI Summary' with KPI scorecard."
+        ],
+        "kpis_computed": {
+          "total_assets_evaluated": 8,
+          "abnormal_assets_count": 2,
+          "normal_assets_count": 6
+        }
+      }
+    },
+    {
+      "artifact_id": "ART_8bb8d895",
+      "task_id": "TASK_5b239964",
+      "filename": "MRPL_Approval_Note_P_101_20260906_183413.docx",
+      "type": "docx",
+      "created_at": "2026-09-06T18:34:13.654239",
+      "source_documents": [
+        "inspection_report.pdf",
+        "MRPL_SOP_P101.pdf"
+      ],
+      "models_used": [
+        "qwen2.5vl:7b",
+        "qwen3:8b"
+      ],
+      "verification_status": "verified",
+      "verified": true,
+      "sha256_hash": "18ed7a05641d2dab99291da57bfd6f0b52284798680c075ec29957f90a0db39a",
+      "size_bytes": 38005,
+      "file_path": "storage\\artifacts\\MRPL_Approval_Note_P_101_20260906_183413.docx",
+      "download_url": "/api/v1/artifacts/ART_8bb8d895/download",
+      "metadata": {
+        "equipment_tag": "P-101",
+        "subject": "Approval for Overhaul and Seal Replacement - Pump P-101"
+      }
+    }
+  ],
+  "total_count": 8,
+  "updated_at": "2026-09-06T18:34:13.655237"
+}
